@@ -1,0 +1,69 @@
+/*
+ * Shell chrome — resize handle for StudioSidebar.
+ *
+ * The handle sits on the sidebar's right edge as a 6px-wide vertical strip.
+ * Invisible by default. A 1px centre line in --scout-accent fades in on
+ * hover/focus, brightens during active drag. Cursor is col-resize over the
+ * full hit zone.
+ *
+ * Consumer-owned: the sidebar wrapper must be position: relative; for the
+ * handle's absolute positioning to anchor correctly.
+ */
+
+.studio-resize-handle {
+  position: absolute;
+  top: 0;
+  right: -5px;        /* centre the 10px hit zone on the sidebar's 1px border-r */
+  bottom: 0;
+  width: 10px;
+  cursor: col-resize;
+  z-index: 32;        /* above sidebar content (z-30) and main (default) */
+  touch-action: none;
+  background: transparent;
+  outline: none;
+}
+
+.studio-resize-handle::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  margin-left: -0.5px;
+  background: var(--scout-accent, var(--hud-accent, currentColor));
+  opacity: 0.12;
+  transition: opacity 0.15s ease, width 0.15s ease, margin-left 0.15s ease;
+  pointer-events: none;
+}
+
+.studio-resize-handle:hover::before,
+.studio-resize-handle:focus-visible::before {
+  opacity: 0.6;
+}
+
+.studio-resize-handle:focus-visible::before {
+  width: 2px;
+  margin-left: -1px;
+}
+
+.studio-resize-handle[data-dragging="true"]::before {
+  opacity: 0.85;
+  width: 2px;
+  margin-left: -1px;
+  transition: none;
+}
+
+.studio-resize-handle:focus-visible {
+  /* Reset the browser default outline; the line above is the affordance. */
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .studio-resize-handle::before {
+    transition: none;
+  }
+}
+
+
+

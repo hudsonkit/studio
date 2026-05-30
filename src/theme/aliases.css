@@ -1,0 +1,75 @@
+/*
+ * Studio → Hudson token translation layer.
+ *
+ * Studio components reference --studio-*, --scout-*, --status-*, --code-*
+ * CSS variables. This file aliases them onto hudsonkit's --hud-* token
+ * contract, so consumers that install HudsonThemeScript + import this file
+ * get studio's styling without maintaining a parallel set of declarations
+ * in their own globals.css.
+ *
+ * Consumer wiring (Next.js):
+ *   1. import { HudsonThemeScript, ThemeProvider } from "studio/theme";
+ *      Mount <HudsonThemeScript /> in <head>, wrap children with <ThemeProvider>.
+ *   2. import "hudsonkit/styles";   // hudsonkit's --hud-* values
+ *   3. import "studio/theme.css";   // this file — studio aliases
+ *
+ * Hudson's tokens flip on the [data-hudson-theme="light|dark"] attribute
+ * (set pre-paint by HudsonThemeScript). The aliases below resolve through
+ * that, so studio surfaces theme-flip for free.
+ */
+
+:root {
+  /* Surface */
+  --studio-canvas:     var(--hud-bg);
+  --studio-canvas-alt: var(--hud-bg-2);
+  --studio-surface:    var(--hud-surface);
+
+  /* Text — three tiers from lattices editorial spec */
+  --studio-ink-strong: var(--hud-ink);
+  --studio-ink:        color-mix(in oklab, var(--hud-ink) 92%, transparent);
+  --studio-ink-faint:  var(--hud-muted);
+
+  /* Structure */
+  --studio-edge:       var(--hud-border);
+  --studio-rule:       color-mix(in oklab, var(--hud-ink)  9%, transparent);
+  --studio-rule-strong:color-mix(in oklab, var(--hud-ink) 16%, transparent);
+
+  /* Chips & inline surfaces (inline code, table-row alt bg, etc.) */
+  --studio-chip-bg:     color-mix(in oklab, var(--hud-ink)  5%, transparent);
+  --studio-chip-border: color-mix(in oklab, var(--hud-ink)  9%, transparent);
+
+  /* Accent (legacy "scout" namespace from openscout origin) */
+  --scout-accent:      var(--hud-accent);
+  --scout-accent-soft: var(--hud-accent-soft);
+
+  /* Status — foreground */
+  --status-ok-fg:      var(--hud-status-ok);
+  --status-warn-fg:    var(--hud-status-warn);
+  --status-error-fg:   var(--hud-status-error);
+  --status-info-fg:    var(--hud-status-info);
+  --status-neutral-fg: var(--hud-muted);
+
+  /* Status — background (derived; hudsonkit doesn't ship pre-mixed bg tones) */
+  --status-ok-bg:      color-mix(in oklab, var(--hud-status-ok)    14%, transparent);
+  --status-warn-bg:    color-mix(in oklab, var(--hud-status-warn)  14%, transparent);
+  --status-error-bg:   color-mix(in oklab, var(--hud-status-error) 14%, transparent);
+  --status-info-bg:    color-mix(in oklab, var(--hud-status-info)  14%, transparent);
+  --status-neutral-bg: color-mix(in oklab, var(--hud-muted)        12%, transparent);
+
+  /* Code viewer */
+  --code-bg:           var(--hud-bg-2);
+  --code-border:       var(--hud-border);
+
+  /* Font stacks — consumer overrides by setting these vars on :root.
+     Body prose uses serif (Newsreader); headings + display use thin sans (Inter).
+     Mono is JetBrains Mono. */
+  --studio-font-sans:  "Inter", system-ui, -apple-system, sans-serif;
+  --studio-font-serif: "Newsreader", Georgia, "Iowan Old Style", serif;
+  --studio-font-mono:  "JetBrains Mono", ui-monospace, "SF Mono", monospace;
+
+  /* Back-compat alias — older consumer code may still reference --studio-serif */
+  --studio-serif: var(--studio-font-serif);
+}
+
+
+
