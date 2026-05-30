@@ -29,6 +29,7 @@
     "src"
   ],
   "scripts": {
+    "dev": "bun run --cwd examples/studio-app dev",
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
