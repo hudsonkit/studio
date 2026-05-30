@@ -5,6 +5,7 @@
   "description": "Shared design-studio primitives: shell, page registry, doc + code viewers, atoms, router adapters. Internal; consumed via bun workspace.",
   "type": "module",
   "workspaces": [
+    "examples/*",
     "../hudson/packages/web/hudsonkit"
   ],
   "main": "./src/index.ts",

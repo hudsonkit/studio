@@ -15,6 +15,50 @@ Shared design-studio primitives extracted from `openscout/design/studio` and `ta
 | `studio/router/next` | `NextRouterProvider` — drop-in adapter that wires `next/link` + `next/navigation` into the studio router context. Next.js consumers only. |
 | `studio/theme` | Re-exports `HudsonThemeScript`, `ThemeProvider`, `useTheme`, `useOptionalTheme` from `hudsonkit/theme`. Pre-paint script + React context for theme/template switching, FOUC-safe. |
 | `studio/theme.css` | CSS file that aliases studio's `--studio-*` / `--scout-*` / `--status-*` / `--code-*` vars onto hudsonkit's `--hud-*` token contract. Consumers import this once; values flip with `[data-hudson-theme]`. |
+| `studio/app-shell` | Hudson AppShell adapters: `StudioHudsonApp` for a complete registry-backed Hudson studio, plus `StudioContentProvider` / `StudioContentOutlet` for framework layouts that already own the shell. |
+
+## Recommended app structure
+
+The strongest internal studios have converged on the same split:
+
+```txt
+app/
+  studio/[[...slug]]/page.tsx       # route entry for the studio app
+  globals.css                       # hudsonkit + studio CSS + Tailwind sources
+src/studio/
+  ContextualStudioApp.tsx           # thin app assembly
+  studioRegistry.ts                 # bucket/surface/status taxonomy + pages
+  StudioPages.tsx                   # product-specific presentations/studies
+docs/
+  CTH-001-*.md                      # source docs stay in the repo, not copied
+```
+
+What comes from the package:
+
+- Hudson AppShell composition, panel chrome, palette wiring, and content slot shape.
+- Registry navigation, page strip, status colors, source refs, focus-mode behavior.
+- Router adapter, theme aliases, shell CSS, doc/code primitives, and status atoms.
+
+What stays in the consumer:
+
+- Product taxonomy and naming (`CTH`, `SCO`, `HUD`, etc.).
+- The page registry and source docs.
+- Presentation/study components that express the product's actual design argument.
+
+Use buckets for structure, not marketing. A good default is:
+
+| Bucket | Purpose |
+| --- | --- |
+| `foundations` | North Star, product boundary, operating model |
+| `presentations` or `eng` | Numbered proposals and engineering docs |
+| `studies` | UI/design studies, each on its own route |
+
+This combines the useful patterns from the existing studios:
+
+- **Hudson**: dogfood `AppShell`; the studio is a proper Hudson app.
+- **OpenScout**: keep plans/engineering/studies as separate registry buckets.
+- **Lattices**: keep proposals as a compact numbered list, not pitch cards.
+- **Talkie**: make each study/presentation its own polished route with persistent chrome.
 
 ## Design assumptions
 
