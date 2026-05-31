@@ -93,7 +93,12 @@ export function renderStudioPage({ pathname, page }: RenderContext) {
     return <MarkdownPage page={page} body={ADOPTION_RECIPE} />;
   }
   if (page?.href === "/studio/recipes/hudson-shell") {
-    return <ReferencePage page={page} sample={referenceSamples["/studio/package/app-shell"]} />;
+    return (
+      <ReferencePage
+        page={page}
+        sample={referenceSamples["/studio/package/app-shell"]}
+      />
+    );
   }
   if (page?.href === "/studio/samples/code-viewer") {
     return <CodeViewerSamplePage page={page} />;
@@ -200,26 +205,32 @@ function ReferencePage({
   sample?: (typeof referenceSamples)[string];
 }) {
   return (
-    <main className="mx-auto max-w-5xl px-6 py-10 lg:px-8">
+    <main className="w-full px-6 py-10 lg:px-7">
       <PageHeader page={page} />
-      <section className="grid gap-6 py-8 lg:grid-cols-[240px_1fr]">
-        <EngDocSheet className="self-start">
-          <DataRow label="bucket">{registry.bucketLabel(page.bucket)}</DataRow>
-          <DataRow label="surface">
-            {page.surface ? registry.surfaceLabel(page.surface) : "Default"}
-          </DataRow>
-          <DataRow label="source">
-            {page.source?.join(", ") ?? "Example-owned"}
-          </DataRow>
-        </EngDocSheet>
+      <section className="py-8">
+        <div className="max-w-[760px]">
+          <EngDocSheet className="w-full">
+            <DataRow label="bucket" labelWidth={150}>
+              {registry.bucketLabel(page.bucket)}
+            </DataRow>
+            <DataRow label="surface" labelWidth={150}>
+              {page.surface ? registry.surfaceLabel(page.surface) : "Default"}
+            </DataRow>
+            <DataRow label="source" labelWidth={150}>
+              {page.source?.join(", ") ?? "Example-owned"}
+            </DataRow>
+          </EngDocSheet>
+        </div>
 
-        {sample ? (
-          <CodeBlock title={sample.title} filename={sample.filename}>
-            {sample.body}
-          </CodeBlock>
-        ) : (
-          <EngMarkdown body={page.blurb ?? page.label} />
-        )}
+        <div className="mt-12 max-w-[980px]">
+          {sample ? (
+            <CodeBlock title={sample.title} filename={sample.filename}>
+              {sample.body}
+            </CodeBlock>
+          ) : (
+            <EngMarkdown body={page.blurb ?? page.label} />
+          )}
+        </div>
       </section>
     </main>
   );
@@ -227,9 +238,9 @@ function ReferencePage({
 
 function MarkdownPage({ page, body }: { page: StudioAppPage; body: string }) {
   return (
-    <main className="mx-auto max-w-4xl px-6 py-10 lg:px-8">
+    <main className="w-full px-6 py-10 lg:px-7">
       <PageHeader page={page} />
-      <section className="py-8">
+      <section className="max-w-[900px] py-8">
         <EngMarkdown body={body} />
       </section>
     </main>
@@ -238,9 +249,9 @@ function MarkdownPage({ page, body }: { page: StudioAppPage; body: string }) {
 
 function CodeViewerSamplePage({ page }: { page: StudioAppPage }) {
   return (
-    <main className="mx-auto max-w-5xl px-6 py-10 lg:px-8">
+    <main className="w-full px-6 py-10 lg:px-7">
       <PageHeader page={page} />
-      <section className="py-8">
+      <section className="max-w-[980px] py-8">
         <CodeBlock title="Rendered through CodeViewer" filename="CodeViewer.tsx">
           {CODE_SAMPLE}
         </CodeBlock>
@@ -251,7 +262,7 @@ function CodeViewerSamplePage({ page }: { page: StudioAppPage }) {
 
 function PageHeader({ page }: { page: StudioAppPage }) {
   return (
-    <header className="border-b border-studio-rule pb-7">
+    <header className="max-w-[980px] border-b border-studio-rule pb-7">
       <div className="font-mono text-[10px] uppercase tracking-eyebrow text-studio-ink-faint">
         {page.bucket} / {page.surface}
       </div>
