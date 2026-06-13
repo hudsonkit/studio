@@ -7,9 +7,14 @@ import { createStatusPalette } from "studio/atoms";
  * navigable API reference.
  */
 
-export type Bucket = "foundations" | "package" | "recipes" | "samples";
-export type Surface = "vision" | "api" | "runtime";
-export type Status = "stable" | "preview" | "wip";
+export type Bucket =
+  | "foundations"
+  | "proposals"
+  | "package"
+  | "recipes"
+  | "samples";
+export type Surface = "vision" | "architecture" | "api" | "runtime";
+export type Status = "stable" | "proposal" | "preview" | "wip";
 
 export type StudioAppPage = StudioPage<Bucket, Surface, Status>;
 
@@ -32,6 +37,15 @@ export const pages: readonly StudioAppPage[] = [
     status: "stable",
     blurb: "How StudioHudsonApp composes Hudson AppShell with a typed registry.",
     source: ["src/app-shell/StudioHudsonApp.tsx"],
+  },
+  {
+    href: "/studio/proposals/stu-001-hudson-insertion-points",
+    label: "STU-001 - Hudson insertion points",
+    bucket: "proposals",
+    surface: "architecture",
+    status: "proposal",
+    blurb: "A Hudson Kit insertion-point contract for Studio mode swaps across web and native surfaces.",
+    source: ["examples/studio-app/src/studio/content/proposals.ts"],
   },
   {
     href: "/studio/package/registry",
@@ -143,11 +157,12 @@ export const pages: readonly StudioAppPage[] = [
 
 export const registry = createRegistry<Bucket, Surface, Status>({
   pages,
-  surfaceOrder: ["vision", "api", "runtime"],
+  surfaceOrder: ["vision", "architecture", "api", "runtime"],
   defaultSurface: "api",
   bucketLabel: (bucket) =>
     ({
       foundations: "Foundations",
+      proposals: "Proposals",
       package: "Package",
       recipes: "Recipes",
       samples: "Samples",
@@ -155,6 +170,7 @@ export const registry = createRegistry<Bucket, Surface, Status>({
   surfaceLabel: (surface) =>
     ({
       vision: "Vision",
+      architecture: "Architecture",
       api: "API",
       runtime: "Runtime",
     })[surface],
@@ -162,18 +178,21 @@ export const registry = createRegistry<Bucket, Surface, Status>({
 
 export const statusPalette = createStatusPalette<Status>({
   stable: { tone: "ok", label: "STABLE" },
+  proposal: { tone: "info", label: "PROPOSAL" },
   preview: { tone: "warn", label: "PREVIEW" },
   wip: { tone: "info", label: "WIP" },
 });
 
 export const STATUS_COLORS: Record<Status, string> = {
   stable: statusPalette.statusToColor("stable"),
+  proposal: statusPalette.statusToColor("proposal"),
   preview: statusPalette.statusToColor("preview"),
   wip: statusPalette.statusToColor("wip"),
 };
 
 export const BUCKETS = [
   { key: "foundations" },
+  { key: "proposals" },
   { key: "package", title: "Subpaths" },
   { key: "recipes" },
   { key: "samples" },

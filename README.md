@@ -60,6 +60,21 @@ This combines the useful patterns from the existing studios:
 - **Lattices**: keep proposals as a compact numbered list, not pitch cards.
 - **Talkie**: make each study/presentation its own polished route with persistent chrome.
 
+## Proposal convention
+
+The first-party Studio app now uses a lightweight numbered proposal convention:
+
+- Proposal ids use the `STU-###` prefix.
+- Proposal routes live under `/studio/proposals/<stu-id>-<slug>`.
+- Proposal pages are ordinary registry entries in the `proposals` bucket.
+- Long-form proposal bodies currently live in
+  `examples/studio-app/src/studio/content/proposals.ts` and render through
+  `EngMarkdown`.
+
+This is intentionally small: Studio already has the registry, shell, page strip,
+source links, and markdown renderer. A heavier docs loader can come later if
+proposal volume makes inline strings painful.
+
 ## Design assumptions
 
 - **Framework**: Router-agnostic in shape, but Next is the supported runtime for internal devtools adoption. The shell components and `EngMarkdown` read `Link`, `usePathname`, and `useSearchParams` from a `StudioRouter` context. Next.js consumers wrap with `NextRouterProvider` from `studio/router/next`. Without a provider, studio falls back to plain `<a>` + `window.location`.

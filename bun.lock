@@ -40,7 +40,10 @@
     },
     "../hudson/packages/web/hudsonkit": {
       "name": "hudsonkit",
-      "version": "0.2.0",
+      "version": "0.2.1",
+      "bin": {
+        "hudsonkit": "./bin/hudsonkit.mjs",
+      },
       "dependencies": {
         "@ai-sdk/react": "^3.0.0",
         "@base-ui-components/react": "^1.0.0-rc.0",
@@ -896,7 +899,5 @@
     "parse-entities/@types/unist": ["@types/unist@2.0.11", "", {}, "sha512-CmBKiL6NNo/OqgmMn95Fk9Whlp2mtvIv+KNpQKN2F4SjvrEesubTRWGYSg+BnWZOnlCaSTU1sMpsBOzgbYhnsA=="],
 
     "rollup/@types/estree": ["@types/estree@1.0.8", "", {}, "sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w=="],
-
-    "studio-hudson-next-sample/studio": ["studio@root:", {}],
   }
 }

@@ -25,6 +25,7 @@ import {
   STATUS_SAMPLE,
   THEME_SAMPLE,
 } from "@/studio/content/codeSamples";
+import { STU_001_HUDSON_INSERTION_POINTS } from "@/studio/content/proposals";
 import {
   HOME_HREF,
   pages,
@@ -87,8 +88,21 @@ const referenceSamples: Record<
   },
 };
 
+const proposalBodies: Record<string, string> = {
+  "/studio/proposals/stu-001-hudson-insertion-points":
+    STU_001_HUDSON_INSERTION_POINTS,
+};
+
 export function renderStudioPage({ pathname, page }: RenderContext) {
   if (pathname === HOME_HREF) return <HomePage />;
+  if (page?.bucket === "proposals") {
+    return (
+      <MarkdownPage
+        page={page}
+        body={proposalBodies[page.href] ?? page.blurb ?? page.label}
+      />
+    );
+  }
   if (page?.href === "/studio/recipes/adoption") {
     return <MarkdownPage page={page} body={ADOPTION_RECIPE} />;
   }
@@ -113,6 +127,7 @@ export function renderStudioPage({ pathname, page }: RenderContext) {
 function HomePage() {
   const { Link } = useStudioRouter();
   const packagePages = pages.filter((page) => page.bucket === "package");
+  const proposalPages = pages.filter((page) => page.bucket === "proposals");
   const recipePages = pages.filter((page) => page.bucket === "recipes");
 
   return (
@@ -137,6 +152,7 @@ function HomePage() {
 
         <EngDocSheet className="self-start">
           <DataRow label="subpaths">{packagePages.length}</DataRow>
+          <DataRow label="proposals">{proposalPages.length}</DataRow>
           <DataRow label="recipes">{recipePages.length}</DataRow>
           <DataRow label="runtime">Next + Hudson</DataRow>
         </EngDocSheet>
@@ -174,26 +190,43 @@ function HomePage() {
         </div>
 
         <aside>
-          <SectionHeading icon={<FileText size={14} />} title="Runtime Recipes" />
-          <div className="mt-4 border-y border-studio-rule">
-            {recipePages.map((entry) => (
-              <Link
-                key={entry.href}
-                href={entry.href}
-                className="block border-b border-studio-rule py-4 last:border-b-0 hover:bg-studio-chip-bg"
-              >
-                <span className="block text-[14px] font-medium text-studio-ink-strong">
-                  {entry.label}
-                </span>
-                <span className="mt-1 block text-[12.5px] leading-relaxed text-studio-ink-faint">
-                  {entry.blurb}
-                </span>
-              </Link>
-            ))}
+          <div className="space-y-8">
+            <div>
+              <SectionHeading icon={<FileText size={14} />} title="Proposals" />
+              <PageList pages={proposalPages} />
+            </div>
+
+            <div>
+              <SectionHeading icon={<FileText size={14} />} title="Runtime Recipes" />
+              <PageList pages={recipePages} />
+            </div>
           </div>
         </aside>
       </section>
     </main>
+  );
+}
+
+function PageList({ pages: entries }: { pages: readonly StudioAppPage[] }) {
+  const { Link } = useStudioRouter();
+
+  return (
+    <div className="mt-4 border-y border-studio-rule">
+      {entries.map((entry) => (
+        <Link
+          key={entry.href}
+          href={entry.href}
+          className="block border-b border-studio-rule py-4 last:border-b-0 hover:bg-studio-chip-bg"
+        >
+          <span className="block text-[14px] font-medium text-studio-ink-strong">
+            {entry.label}
+          </span>
+          <span className="mt-1 block text-[12.5px] leading-relaxed text-studio-ink-faint">
+            {entry.blurb}
+          </span>
+        </Link>
+      ))}
+    </div>
   );
 }
 
