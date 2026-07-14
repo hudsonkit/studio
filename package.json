@@ -17,11 +17,13 @@
     "./doc": "./src/doc/index.ts",
     "./code": "./src/code/index.ts",
     "./local": "./src/local/index.ts",
+    "./injection": "./src/injection/index.tsx",
     "./atoms": "./src/atoms/index.ts",
     "./router": "./src/router/index.ts",
     "./router/next": "./src/router/next.tsx",
     "./theme": "./src/theme/index.ts",
     "./theme.css": "./src/theme/aliases.css",
+    "./injection.css": "./src/injection/styles.css",
     "./app-shell": "./src/app-shell/index.ts",
     "./doc.css": "./src/doc/eng-doc.css",
     "./shell.css": "./src/shell/shell.css"

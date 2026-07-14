@@ -3,6 +3,7 @@
 @import "studio/theme.css";
 @import "studio/doc.css";
 @import "studio/shell.css";
+@import "studio/injection.css";
 
 @source "../app/**/*.{ts,tsx}";
 @source "../src/**/*.{ts,tsx}";

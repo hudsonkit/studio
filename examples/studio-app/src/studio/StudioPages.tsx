@@ -13,12 +13,14 @@ import {
 } from "lucide-react";
 import { CodeViewer } from "studio/code";
 import { DataRow, EngDocSheet, EngMarkdown } from "studio/doc";
+import { StudioRegisteredInjectionHost } from "studio/injection";
 import type { StudioHudsonRenderContext } from "studio/app-shell";
 import { useStudioRouter } from "studio/router";
 import {
   ADOPTION_RECIPE,
   CODE_SAMPLE,
   DOC_SAMPLE,
+  INJECTION_SAMPLE,
   REGISTRY_SAMPLE,
   ROUTER_SAMPLE,
   SHELL_SAMPLE,
@@ -65,6 +67,11 @@ const referenceSamples: Record<
     filename: "CodeViewer.tsx",
     title: "Code viewer",
     body: CODE_SAMPLE,
+  },
+  "/studio/package/injection": {
+    filename: "InsertionHost.tsx",
+    title: "Registered injection host",
+    body: INJECTION_SAMPLE,
   },
   "/studio/package/atoms": {
     filename: "StatusPill.tsx",
@@ -129,6 +136,7 @@ function HomePage() {
   const packagePages = pages.filter((page) => page.bucket === "package");
   const proposalPages = pages.filter((page) => page.bucket === "proposals");
   const recipePages = pages.filter((page) => page.bucket === "recipes");
+  const samplePages = pages.filter((page) => page.bucket === "samples");
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10 lg:px-8">
@@ -154,6 +162,8 @@ function HomePage() {
           <DataRow label="subpaths">{packagePages.length}</DataRow>
           <DataRow label="proposals">{proposalPages.length}</DataRow>
           <DataRow label="recipes">{recipePages.length}</DataRow>
+          <DataRow label="samples">{samplePages.length}</DataRow>
+          <DataRow label="anchors">{registry.insertionPoints.length}</DataRow>
           <DataRow label="runtime">Next + Hudson</DataRow>
         </EngDocSheet>
       </header>
@@ -200,6 +210,11 @@ function HomePage() {
               <SectionHeading icon={<FileText size={14} />} title="Runtime Recipes" />
               <PageList pages={recipePages} />
             </div>
+
+            <div>
+              <SectionHeading icon={<Boxes size={14} />} title="Insertion Points" />
+              <InsertionPointList />
+            </div>
           </div>
         </aside>
       </section>
@@ -237,6 +252,21 @@ function ReferencePage({
   page: StudioAppPage;
   sample?: (typeof referenceSamples)[string];
 }) {
+  const targetPoint = page.target
+    ? registry.insertionPoint(page.target.anchor)
+    : undefined;
+  const referenceBody = (
+    <div className="mt-12 max-w-[980px]">
+      {sample ? (
+        <CodeBlock title={sample.title} filename={sample.filename}>
+          {sample.body}
+        </CodeBlock>
+      ) : (
+        <EngMarkdown body={page.blurb ?? page.label} />
+      )}
+    </div>
+  );
+
   return (
     <main className="w-full px-6 py-10 lg:px-7">
       <PageHeader page={page} />
@@ -252,20 +282,89 @@ function ReferencePage({
             <DataRow label="source" labelWidth={150}>
               {page.source?.join(", ") ?? "Example-owned"}
             </DataRow>
+            {page.target ? (
+              <DataRow label="target" labelWidth={150}>
+                {page.target.anchor} · {page.target.mode}
+              </DataRow>
+            ) : null}
+            {targetPoint ? (
+              <DataRow label="host allows" labelWidth={150}>
+                {targetPoint.allowedModes.join(", ")}
+              </DataRow>
+            ) : null}
           </EngDocSheet>
         </div>
 
-        <div className="mt-12 max-w-[980px]">
-          {sample ? (
-            <CodeBlock title={sample.title} filename={sample.filename}>
-              {sample.body}
-            </CodeBlock>
-          ) : (
-            <EngMarkdown body={page.blurb ?? page.label} />
-          )}
-        </div>
+        {page.href === "/studio/package/registry" ? (
+          <StudioRegisteredInjectionHost
+            registry={registry}
+            anchor="studio.page.reference-body"
+            renderStudy={(study) => <InjectedReferenceBodyStudy study={study} />}
+          >
+            {referenceBody}
+          </StudioRegisteredInjectionHost>
+        ) : (
+          referenceBody
+        )}
       </section>
     </main>
+  );
+}
+
+function InjectedReferenceBodyStudy({ study }: { study: StudioAppPage }) {
+  return (
+    <div className="max-w-[980px] border-y border-studio-rule py-8">
+      <div className="font-mono text-[10px] uppercase tracking-eyebrow text-studio-ink-faint">
+        registered study
+      </div>
+      <h2 className="mt-3 text-[28px] font-medium leading-tight text-studio-ink-strong">
+        {study.label}
+      </h2>
+      <p
+        className="mt-4 max-w-[64ch] text-[15px] leading-[1.7] text-studio-ink"
+        style={{ fontFamily: "var(--studio-font-serif)" }}
+      >
+        This replacement is resolved through the Studio registry by the
+        insertion point id, then activated by local URL or storage state.
+      </p>
+      <EngDocSheet className="mt-6 max-w-[640px]">
+        <DataRow label="study id">{study.id}</DataRow>
+        <DataRow label="target">{study.target?.anchor}</DataRow>
+        <DataRow label="mode">{study.target?.mode}</DataRow>
+      </EngDocSheet>
+    </div>
+  );
+}
+
+function InsertionPointList() {
+  return (
+    <div className="mt-4 border-y border-studio-rule">
+      {registry.insertionPoints.map((point) => {
+        const studies = registry.studiesForInsertionPoint(point.id);
+
+        return (
+          <div
+            key={point.id}
+            className="border-b border-studio-rule py-4 last:border-b-0"
+          >
+            <span className="block font-mono text-[10px] uppercase tracking-eyebrow text-studio-ink-faint">
+              {point.scope} · {point.surface ?? "any"}
+            </span>
+            <span className="mt-1 block text-[14px] font-medium text-studio-ink-strong">
+              {point.label}
+            </span>
+            <span className="mt-1 block text-[12.5px] leading-relaxed text-studio-ink-faint">
+              {point.id} · {point.allowedModes.join(", ")}
+            </span>
+            {studies.length > 0 ? (
+              <span className="mt-2 block text-[12px] text-studio-ink">
+                {studies.length} registered study
+              </span>
+            ) : null}
+          </div>
+        );
+      })}
+    </div>
   );
 }
 

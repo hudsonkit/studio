@@ -17,6 +17,11 @@ export interface StudioPage<
   Surface extends string = string,
   Status extends string = string,
 > {
+  /**
+   * Stable page/study id. `href` is still the route key; `id` is for
+   * cross-runtime references such as Studio-mode injection.
+   */
+  id?: string;
   /** Route. `/path` form, no trailing slash. */
   href: string;
   /** Sidebar label. */
@@ -37,8 +42,62 @@ export interface StudioPage<
   source?: string[];
   /** Subtitle in the page strip. */
   blurb?: string;
+  /**
+   * Optional insertion target for a study. The page still renders as a normal
+   * Studio route, but the registry can also answer which study belongs at a
+   * declared app/native insertion point.
+   */
+  target?: StudioStudyTarget<Surface>;
   /** ISO mtime. Used by recency-sorted sidebar slices. */
   updatedAt?: string;
+}
+
+export type StudioInsertionScope =
+  | "shell"
+  | "navigation"
+  | "app"
+  | "page"
+  | "section"
+  | "component"
+  | "object";
+
+export type StudioInsertionMode =
+  | "replace"
+  | "before"
+  | "after"
+  | "overlay"
+  | "decorate";
+
+export interface StudioInsertionPoint<Surface extends string = string> {
+  /** Stable anchor id exposed by the host app or native surface. */
+  id: string;
+  /** Human-readable name for Studio pickers and inventories. */
+  label: string;
+  /** Intent category, not a layout instruction. */
+  scope: StudioInsertionScope;
+  /** Product surface that owns this anchor. */
+  surface?: Surface;
+  /** Route pattern or route path where this anchor is expected. */
+  route?: string;
+  /** Mount modes the host explicitly allows at this anchor. */
+  allowedModes: ReadonlyArray<StudioInsertionMode>;
+  /** Source file(s) that declare or consume this anchor. */
+  source?: string[];
+  /** Short note shown in inventories or picker UI. */
+  blurb?: string;
+}
+
+export interface StudioStudyTarget<Surface extends string = string> {
+  /** Insertion point id from `StudioInsertionPoint.id`. */
+  anchor: string;
+  /** Requested mount mode. Must be allowed by the host insertion point. */
+  mode: StudioInsertionMode;
+  /** Optional route override when a study targets one route of a shared anchor. */
+  route?: string;
+  /** Optional surface override when a study can mount across surfaces. */
+  surface?: Surface;
+  /** URL/query aliases that can activate this study in a host runtime. */
+  aliases?: string[];
 }
 
 export interface SurfaceGroup<
@@ -65,11 +124,21 @@ export interface StudioRegistry<
   Status extends string,
 > {
   readonly pages: ReadonlyArray<StudioPage<Bucket, Surface, Status>>;
+  readonly insertionPoints: ReadonlyArray<StudioInsertionPoint<Surface>>;
   readonly surfaceOrder: ReadonlyArray<Surface>;
   bucketLabel(bucket: Bucket): string;
   surfaceLabel(surface: Surface): string;
+  insertionPoint(id: string): StudioInsertionPoint<Surface> | undefined;
   pageForPath(
     pathname: string | null,
+    extra?: ReadonlyArray<StudioPage<Bucket, Surface, Status>>,
+  ): StudioPage<Bucket, Surface, Status> | undefined;
+  studiesForInsertionPoint(
+    anchor: string,
+    extra?: ReadonlyArray<StudioPage<Bucket, Surface, Status>>,
+  ): StudioPage<Bucket, Surface, Status>[];
+  studyForInsertionPoint(
+    anchor: string,
     extra?: ReadonlyArray<StudioPage<Bucket, Surface, Status>>,
   ): StudioPage<Bucket, Surface, Status> | undefined;
   pagesIn(
@@ -91,6 +160,7 @@ export interface CreateRegistryOptions<
   Status extends string,
 > {
   pages: ReadonlyArray<StudioPage<Bucket, Surface, Status>>;
+  insertionPoints?: ReadonlyArray<StudioInsertionPoint<Surface>>;
   /** Order surfaces appear in inside a bucket, regardless of page order. */
   surfaceOrder: ReadonlyArray<Surface>;
   /** Surface assigned to pages with no `surface` field. */
@@ -106,8 +176,14 @@ export function createRegistry<
 >(
   options: CreateRegistryOptions<Bucket, Surface, Status>,
 ): StudioRegistry<Bucket, Surface, Status> {
-  const { pages, surfaceOrder, defaultSurface, bucketLabel, surfaceLabel } =
-    options;
+  const {
+    pages,
+    insertionPoints = [],
+    surfaceOrder,
+    defaultSurface,
+    bucketLabel,
+    surfaceLabel,
+  } = options;
 
   type Page = StudioPage<Bucket, Surface, Status>;
 
@@ -121,6 +197,24 @@ export function createRegistry<
   ): Page | undefined {
     if (!pathname) return undefined;
     return merged(extra).find((p) => p.href === pathname);
+  }
+
+  function insertionPoint(id: string): StudioInsertionPoint<Surface> | undefined {
+    return insertionPoints.find((point) => point.id === id);
+  }
+
+  function studiesForInsertionPoint(
+    anchor: string,
+    extra: ReadonlyArray<Page> = [],
+  ): Page[] {
+    return merged(extra).filter((p) => p.target?.anchor === anchor);
+  }
+
+  function studyForInsertionPoint(
+    anchor: string,
+    extra: ReadonlyArray<Page> = [],
+  ): Page | undefined {
+    return studiesForInsertionPoint(anchor, extra)[0];
   }
 
   function pagesIn(
@@ -166,10 +260,14 @@ export function createRegistry<
 
   return {
     pages,
+    insertionPoints,
     surfaceOrder,
     bucketLabel,
     surfaceLabel,
+    insertionPoint,
     pageForPath,
+    studiesForInsertionPoint,
+    studyForInsertionPoint,
     pagesIn,
     pagesBySurface,
     familyGroups,

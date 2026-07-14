@@ -4,29 +4,53 @@
  * without filesystem I/O at request time.
  */
 
-export const REGISTRY_SAMPLE = `import { createRegistry, type StudioPage } from "studio/registry";
+export const REGISTRY_SAMPLE = `import {
+  createRegistry,
+  type StudioInsertionPoint,
+  type StudioPage,
+} from "studio/registry";
 
-export type Bucket = "foundations" | "package" | "recipes";
+export type Bucket = "foundations" | "package" | "recipes" | "samples";
 export type Surface = "vision" | "api" | "runtime";
 export type Status = "stable" | "preview" | "wip";
 
 type Page = StudioPage<Bucket, Surface, Status>;
+
+export const insertionPoints = [
+  {
+    id: "studio.page.reference-body",
+    label: "Reference page body",
+    scope: "page",
+    surface: "runtime",
+    route: "/studio/package/[slug]",
+    allowedModes: ["replace", "after", "decorate"],
+  },
+] satisfies readonly StudioInsertionPoint<Surface>[];
 
 export const pages: Page[] = [
   { href: "/studio", label: "What Studio is",
     bucket: "foundations", surface: "vision", status: "stable" },
   { href: "/studio/package/registry", label: "studio/registry",
     bucket: "package", surface: "api", status: "stable" },
+  { id: "reference-body-study", href: "/studio/samples/reference-body-study",
+    label: "Reference body study", bucket: "samples", surface: "runtime",
+    status: "preview", target: {
+      anchor: "studio.page.reference-body",
+      mode: "replace",
+      aliases: ["reference-body"],
+    } },
 ];
 
 export const registry = createRegistry<Bucket, Surface, Status>({
   pages,
+  insertionPoints,
   surfaceOrder: ["vision", "api", "runtime"],
   defaultSurface: "api",
   bucketLabel: (b) => ({
     foundations: "Foundations",
     package: "Package",
     recipes: "Recipes",
+    samples: "Samples",
   }[b]),
   surfaceLabel: (s) => ({
     vision: "Vision",
@@ -34,6 +58,8 @@ export const registry = createRegistry<Bucket, Surface, Status>({
     runtime: "Runtime",
   }[s]),
 });
+
+registry.studyForInsertionPoint("studio.page.reference-body");
 `;
 
 export const SHELL_SAMPLE = `import { StudioHudsonApp } from "studio/app-shell";
@@ -142,6 +168,25 @@ export function ViewSource({ content }: { content: string }) {
 }
 `;
 
+export const INJECTION_SAMPLE = `import { StudioRegisteredInjectionHost } from "studio/injection";
+import "studio/injection.css";
+
+function WorkspacePage() {
+  return (
+    <StudioRegisteredInjectionHost
+      registry={registry}
+      anchor="workspace.summary"
+      renderStudy={(study) => <WorkspaceSummaryStudy study={study} />}
+    >
+      <WorkspaceSummary />
+    </StudioRegisteredInjectionHost>
+  );
+}
+
+// Activates locally with:
+// /workspaces/demo?studio=workspace-summary&studioMode=after
+`;
+
 export const ADOPTION_RECIPE = `# Adopt Studio in 10 steps
 
 1. Add \`studio\` and \`hudsonkit\` as bun workspace members at the
@@ -161,5 +206,7 @@ export const ADOPTION_RECIPE = `# Adopt Studio in 10 steps
    or use \`StudioHudsonApp\` if you want the Hudson AppShell wiring done
    for you.
 10. Replace any local \`--studio-*\` CSS vars, status pill component, or
-    code-mirror theme with the package versions.
+    code-mirror theme with the package versions. If the host app uses
+    live insertion points, import \`studio/injection.css\` or implement the
+    \`.studio-injection*\` class contract locally.
 `;

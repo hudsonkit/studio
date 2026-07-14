@@ -1,4 +1,8 @@
-import { createRegistry, type StudioPage } from "studio/registry";
+import {
+  createRegistry,
+  type StudioInsertionPoint,
+  type StudioPage,
+} from "studio/registry";
 import { createStatusPalette } from "studio/atoms";
 
 /**
@@ -19,6 +23,29 @@ export type Status = "stable" | "proposal" | "preview" | "wip";
 export type StudioAppPage = StudioPage<Bucket, Surface, Status>;
 
 export const HOME_HREF = "/studio";
+
+export const insertionPoints = [
+  {
+    id: "studio.shell.navigation",
+    label: "Studio shell navigation",
+    scope: "navigation",
+    surface: "runtime",
+    route: "/studio",
+    allowedModes: ["decorate", "overlay"],
+    source: ["src/shell/RegistryNav.tsx"],
+    blurb: "Left-panel registry navigation exposed as a controlled Studio-mode anchor.",
+  },
+  {
+    id: "studio.page.reference-body",
+    label: "Reference page body",
+    scope: "page",
+    surface: "runtime",
+    route: "/studio/package/[slug]",
+    allowedModes: ["replace", "after", "decorate"],
+    source: ["examples/studio-app/src/studio/StudioPages.tsx"],
+    blurb: "The rendered package-reference body below the page header.",
+  },
+] satisfies readonly StudioInsertionPoint<Surface>[];
 
 export const pages: readonly StudioAppPage[] = [
   {
@@ -82,6 +109,15 @@ export const pages: readonly StudioAppPage[] = [
     status: "stable",
     blurb: "CodeViewer with theme detection and a 17-language CodeMirror pack.",
     source: ["src/code/index.ts"],
+  },
+  {
+    href: "/studio/package/injection",
+    label: "studio/injection",
+    bucket: "package",
+    surface: "api",
+    status: "preview",
+    blurb: "Reference runtime for registered study injection: URL/storage activation, before/after compare, and insertion-point lookup.",
+    source: ["src/injection/index.tsx", "src/injection/state.ts"],
   },
   {
     href: "/studio/package/atoms",
@@ -153,10 +189,32 @@ export const pages: readonly StudioAppPage[] = [
     status: "stable",
     blurb: "EngMarkdown rendering a short markdown payload.",
   },
+  {
+    id: "studio-reference-target-study",
+    href: "/studio/samples/targeted-study",
+    label: "Targeted study sample",
+    bucket: "samples",
+    surface: "runtime",
+    family: "insertion-targets",
+    status: "preview",
+    source: [
+      "src/registry/index.ts",
+      "examples/studio-app/src/studio/studioRegistry.ts",
+    ],
+    blurb: "A normal Studio page that also declares its host-app insertion point.",
+    target: {
+      anchor: "studio.page.reference-body",
+      mode: "replace",
+      route: "/studio/package/registry",
+      surface: "runtime",
+      aliases: ["targeted-study", "reference-body"],
+    },
+  },
 ];
 
 export const registry = createRegistry<Bucket, Surface, Status>({
   pages,
+  insertionPoints,
   surfaceOrder: ["vision", "architecture", "api", "runtime"],
   defaultSurface: "api",
   bucketLabel: (bucket) =>

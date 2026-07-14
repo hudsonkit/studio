@@ -6,15 +6,17 @@ Shared design-studio primitives extracted from `openscout/design/studio` and `ta
 
 | Subpath | Contents |
 | --- | --- |
-| `studio/registry` | Generic `StudioPage<B, S, St>` + `createRegistry(...)`. Returns `pageForPath`, `pagesIn`, `pagesBySurface`, `familyGroups`, plus `bucketLabel` / `surfaceLabel` bound to the consumer's taxonomy. |
+| `studio/registry` | Generic `StudioPage<B, S, St>` + insertion-point metadata + `createRegistry(...)`. Returns page grouping helpers plus `insertionPoint`, `studyForInsertionPoint`, and `studiesForInsertionPoint` bound to the consumer's taxonomy. |
 | `studio/shell` | `StudioShell` (layout + focus mode), `StudioSidebar` (bucket-driven, per-bucket custom render), `PageStrip` (breadcrumb + status + source files + blurb). Plus `SidebarLink`, `StatusDot`, `cn`. |
 | `studio/doc` | `EngMarkdown` (react-markdown + highlight.js with `buildFileHref` and `viewableExtensions` overrides), `EngDocSheet` (bordered frame), `DataRow` (label/value primitive). |
 | `studio/code` | `CodeViewer` (CodeMirror 6, read-only). `themeDetection` accepts `media` \| `data-attribute` \| `controlled`. `theme` builder defaults to `studioCodeTheme`. 17-language pack via `languageForFilename`. |
+| `studio/injection` | Reference runtime for registered study injection: URL/storage activation, before/after compare, and `StudioRegisteredInjectionHost` for resolving studies from insertion-point ids. |
 | `studio/atoms` | `StatusPill` primitive (tone + label + variant). `createStatusPalette<Status>(map)` binds it to a consumer's status union and returns `statusToTone` / `statusToLabel` / `statusToColor`. |
 | `studio/router` | `StudioRouterProvider`, `useStudioRouter`, `vanillaRouter`. Default fallback uses `<a>` + `window.location`. |
 | `studio/router/next` | `NextRouterProvider` — drop-in adapter that wires `next/link` + `next/navigation` into the studio router context. Next.js consumers only. |
 | `studio/theme` | Re-exports `HudsonThemeScript`, `ThemeProvider`, `useTheme`, `useOptionalTheme` from `hudsonkit/theme`. Pre-paint script + React context for theme/template switching, FOUC-safe. |
 | `studio/theme.css` | CSS file that aliases studio's `--studio-*` / `--scout-*` / `--status-*` / `--code-*` vars onto hudsonkit's `--hud-*` token contract. Consumers import this once; values flip with `[data-hudson-theme]`. |
+| `studio/injection.css` | Minimal styles for the Studio-mode injection frame. Consumers can import it as-is or copy the `.studio-injection*` class contract into their own app CSS. |
 | `studio/app-shell` | Hudson AppShell adapters: `StudioHudsonApp` for a complete registry-backed Hudson studio, plus `StudioContentProvider` / `StudioContentOutlet` for framework layouts that already own the shell. |
 
 ## Recommended app structure
@@ -144,6 +146,7 @@ Caddy in the foreground.
 - **Framework**: Router-agnostic in shape, but Next is the supported runtime for internal devtools adoption. The shell components and `EngMarkdown` read `Link`, `usePathname`, and `useSearchParams` from a `StudioRouter` context. Next.js consumers wrap with `NextRouterProvider` from `studio/router/next`. Without a provider, studio falls back to plain `<a>` + `window.location`.
 - **Theme**: Studio delegates to hudsonkit's theme system. Consumers install hudsonkit (transitive via studio), mount `<HudsonThemeScript />` in `<head>`, wrap with `<ThemeProvider>`, and import `studio/theme.css`. Hudson supplies the `--hud-*` token values per `[data-hudson-theme="light|dark"]`; studio's aliases.css translates those into the `--studio-*` / `--scout-*` / `--status-*` vars that studio's components reference.
 - **Styling**: Tailwind. Studio components use class names like `bg-studio-canvas`, `border-studio-edge`, `text-studio-ink`, `text-studio-ink-faint`. Consumers map those classes in their `tailwind.config.ts` to the `--studio-*` vars (which now resolve via the alias layer to hudsonkit tokens).
+- **Insertion points are registered, not scraped**. Host apps and native surfaces expose stable anchor ids; Studio pages that are also studies attach `target` metadata to those anchors. The registry can then resolve which study belongs at a host insertion point without selector-based DOM injection.
 - **Taxonomy is not shared**. Each subapp keeps its own `lib/studio-pages.ts` with concrete `Bucket` / `Surface` / `Status` unions and the page data. The package is generic over those — see `src/registry/`.
 
 ## Adoption recipe (per subapp)
