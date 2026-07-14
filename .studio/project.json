@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "id": "studio",
+  "label": "Studio",
+  "studioDir": "examples/studio-app",
+  "start": "bun next dev --hostname 0.0.0.0 --port {port}",
+  "healthPath": "/studio",
+  "rootPath": "/studio",
+  "host": "studio.studio.local",
+  "preferredPort": 5191
+}

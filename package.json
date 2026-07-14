@@ -16,6 +16,7 @@
     "./shell": "./src/shell/index.ts",
     "./doc": "./src/doc/index.ts",
     "./code": "./src/code/index.ts",
+    "./local": "./src/local/index.ts",
     "./atoms": "./src/atoms/index.ts",
     "./router": "./src/router/index.ts",
     "./router/next": "./src/router/next.tsx",
@@ -28,8 +29,15 @@
   "files": [
     "src"
   ],
+  "bin": {
+    "studio-local": "./src/local/cli.ts"
+  },
   "scripts": {
     "dev": "bun run --cwd examples/studio-app dev",
+    "local": "bun src/local/cli.ts",
+    "local:serve": "bun src/local/cli.ts serve",
+    "local:edge": "bun src/local/cli.ts edge",
+    "test": "bun test",
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
@@ -60,6 +68,7 @@
     "remark-gfm": "^4.0.0"
   },
   "devDependencies": {
+    "@types/node": "^24.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "next": "^16.1.6",

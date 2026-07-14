@@ -75,6 +75,70 @@ This is intentionally small: Studio already has the registry, shell, page strip,
 source links, and markdown renderer. A heavier docs loader can come later if
 proposal volume makes inline strings painful.
 
+## Local edge convention
+
+Studio also has a machine-local entrypoint for dev, modeled after Scout's
+`scout.local` edge. The goal is to stop remembering per-project ports.
+
+Each project declares its Studio app in `.studio/project.json`:
+
+```json
+{
+  "version": 1,
+  "id": "openscout",
+  "label": "OpenScout",
+  "studioDir": "design/studio",
+  "start": "bun next dev --hostname 0.0.0.0 --port {port}",
+  "healthPath": "/studio",
+  "rootPath": "/studio",
+  "host": "openscout.studio.local",
+  "preferredPort": 3030
+}
+```
+
+The machine registry lives outside project repos:
+
+```txt
+~/Library/Application Support/Studio/
+  registry.json
+  local-edge/Caddyfile
+  logs/
+  runtime/
+```
+
+`studio.local` is the supervisor dashboard. Per-project hosts such as
+`openscout.studio.local` are generated Caddy routes. The shared local edge is
+installed once as a macOS LaunchAgent (`dev.studio.local`). Any Studio client can
+call `studio-local ensure` from its repo: if the shared edge is already
+installed, it just registers the project and rewrites the Caddyfile; if it is not
+installed, it creates the support directories, checks Caddy, installs the
+LaunchAgent, then registers the project.
+
+When the edge is running, it publishes those names with Bonjour/mDNS on macOS,
+runs the supervisor, and runs Caddy from the generated Caddyfile. If a Studio app
+is down, Caddy serves a same-origin start page that asks the supervisor to run
+the project's start command, then redirects back to the requested Studio URL.
+
+Useful commands:
+
+```bash
+bun run local init --id studio --studio-dir examples/studio-app \
+  --start "bun next dev --hostname 0.0.0.0 --port {port}" \
+  --health-path /studio --root-path /studio --preferred-port 5191
+
+bun run local ensure .
+bun run local list
+bun run local caddyfile
+```
+
+The checked-in Studio package manifest at `.studio/project.json` dogfoods this
+flow and registers the first-party example app as `studio.studio.local`.
+
+Low-level commands still exist for debugging: `bun run local install` installs
+the shared edge without registering a project, `bun run local enable` only
+updates the machine registry, and `bun run local edge` runs the supervisor and
+Caddy in the foreground.
+
 ## Design assumptions
 
 - **Framework**: Router-agnostic in shape, but Next is the supported runtime for internal devtools adoption. The shell components and `EngMarkdown` read `Link`, `usePathname`, and `useSearchParams` from a `StudioRouter` context. Next.js consumers wrap with `NextRouterProvider` from `studio/router/next`. Without a provider, studio falls back to plain `<a>` + `window.location`.
