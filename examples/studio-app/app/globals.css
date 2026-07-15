@@ -32,6 +32,81 @@ body {
   min-height: 100%;
 }
 
+.studio-landing {
+  --studio-canvas: #f6f3ea;
+  --studio-canvas-alt: #efebdf;
+  --studio-surface: #fbf9f3;
+  --studio-ink: #474842;
+  --studio-ink-strong: #20211e;
+  --studio-ink-faint: #70766f;
+  --studio-rule: rgba(63, 91, 108, 0.15);
+  --studio-rule-strong: rgba(46, 75, 92, 0.29);
+  --studio-chip-bg: rgba(75, 108, 126, 0.08);
+  --studio-chip-border: rgba(46, 75, 92, 0.28);
+  background-image:
+    linear-gradient(to right, rgba(64, 100, 121, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(64, 100, 121, 0.04) 1px, transparent 1px),
+    linear-gradient(to right, rgba(64, 100, 121, 0.085) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(64, 100, 121, 0.085) 1px, transparent 1px);
+  background-size: 24px 24px, 24px 24px, 120px 120px, 120px 120px;
+  background-position:
+    calc((100vw - min(100vw, 75rem)) / 2 + 1.5rem) 0;
+}
+
+.landing-sheet {
+  isolation: isolate;
+}
+
+.landing-sheet--paper {
+  background-color: #fbf9f3;
+  background-image: radial-gradient(rgba(32, 33, 30, 0.035) 0.45px, transparent 0.55px);
+  background-size: 5px 5px;
+}
+
+.landing-sheet--tint {
+  background-color: rgba(224, 231, 228, 0.82);
+  backdrop-filter: blur(2px);
+}
+
+.landing-sheet--glass {
+  background-color: rgba(251, 249, 243, 0.72);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.34);
+  backdrop-filter: blur(8px);
+}
+
+.landing-hero-grid {
+  gap: 3rem;
+}
+
+@media (min-width: 64rem) {
+  .landing-hero-grid {
+    grid-template-columns: 456px 576px;
+    column-gap: 120px;
+  }
+}
+
+.landing-frame::before,
+.landing-frame::after {
+  position: absolute;
+  z-index: 2;
+  width: 9px;
+  height: 9px;
+  border-color: #ad5e4e;
+  content: "";
+  pointer-events: none;
+}
+
+.landing-frame::before {
+  top: -1px;
+  left: -1px;
+  border-top: 1px solid;
+  border-left: 1px solid;
+}
+
+.landing-frame::after {
+  display: none;
+}
+
 body {
   margin: 0;
   background: var(--studio-canvas);

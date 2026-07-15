@@ -1,6 +1,29 @@
 # studio
 
-Shared design-studio primitives extracted from `openscout/design/studio` and `talkie/design/studio`. Internal; not published to npm. Each subapp adopts on its own timeline.
+Studio gives product teams a place to keep design studies, engineering notes,
+and working UI experiments beside the code they describe.
+
+It is an internal TypeScript package, shared by local workspace rather than
+published to npm. Product repos bring their own content and taxonomy; Studio
+provides the shell, registry, docs, code viewer, and local runtime.
+
+## Quick start
+
+```bash
+bun install
+bun dev
+```
+
+Open [http://localhost:5191/studio](http://localhost:5191/studio). The example
+app is both a package reference and a small working Studio.
+
+To register it with the shared local edge:
+
+```bash
+bun run local ensure .
+```
+
+Then open `http://studio.studio.local`.
 
 ## What's here
 
@@ -146,8 +169,8 @@ Caddy in the foreground.
 - **Framework**: Router-agnostic in shape, but Next is the supported runtime for internal devtools adoption. The shell components and `EngMarkdown` read `Link`, `usePathname`, and `useSearchParams` from a `StudioRouter` context. Next.js consumers wrap with `NextRouterProvider` from `studio/router/next`. Without a provider, studio falls back to plain `<a>` + `window.location`.
 - **Theme**: Studio delegates to hudsonkit's theme system. Consumers install hudsonkit (transitive via studio), mount `<HudsonThemeScript />` in `<head>`, wrap with `<ThemeProvider>`, and import `studio/theme.css`. Hudson supplies the `--hud-*` token values per `[data-hudson-theme="light|dark"]`; studio's aliases.css translates those into the `--studio-*` / `--scout-*` / `--status-*` vars that studio's components reference.
 - **Styling**: Tailwind. Studio components use class names like `bg-studio-canvas`, `border-studio-edge`, `text-studio-ink`, `text-studio-ink-faint`. Consumers map those classes in their `tailwind.config.ts` to the `--studio-*` vars (which now resolve via the alias layer to hudsonkit tokens).
-- **Insertion points are registered, not scraped**. Host apps and native surfaces expose stable anchor ids; Studio pages that are also studies attach `target` metadata to those anchors. The registry can then resolve which study belongs at a host insertion point without selector-based DOM injection.
 - **Taxonomy is not shared**. Each subapp keeps its own `lib/studio-pages.ts` with concrete `Bucket` / `Surface` / `Status` unions and the page data. The package is generic over those — see `src/registry/`.
+- **Insertion points are registered, not scraped**. Host apps and native surfaces expose stable anchor ids; Studio pages that are also studies attach `target` metadata to those anchors. The registry can then resolve which study belongs at a host insertion point without selector-based DOM injection.
 
 ## Adoption recipe (per subapp)
 
@@ -245,7 +268,11 @@ Without this, classes that appear only inside studio's or hudsonkit's source won
 
 ```ts
 // design/studio/lib/studio-pages.ts
-import { createRegistry, type StudioPage } from "studio/registry";
+import {
+  createRegistry,
+  type StudioInsertionPoint,
+  type StudioPage,
+} from "studio/registry";
 
 export type StudioBucket = "plans" | "eng" | "foundations" | "studies" | /* … */;
 export type StudioSurface = "web" | "ios" | "macos" | "shell" | "cross";
@@ -253,13 +280,40 @@ export type StudioStatus = "draft" | "in-flight" | "shipped" | "shelved" | "conc
 
 type Page = StudioPage<StudioBucket, StudioSurface, StudioStatus>;
 
+export const STUDIO_INSERTION_POINTS = [
+  {
+    id: "workspace.summary",
+    label: "Workspace summary",
+    scope: "page",
+    surface: "web",
+    route: "/workspaces/[id]",
+    allowedModes: ["replace", "decorate"],
+    source: ["apps/web/client/screens/WorkspaceScreen.tsx"],
+  },
+] satisfies readonly StudioInsertionPoint<StudioSurface>[];
+
 export const STUDIO_PAGES: Page[] = [
   { href: "/eng", label: "Engineering Index", bucket: "eng", status: "shipped" /* … */ },
+  {
+    id: "workspace-summary-study",
+    href: "/studies/workspace-summary-density",
+    label: "Workspace Summary Density",
+    bucket: "studies",
+    surface: "web",
+    status: "concept",
+    target: {
+      anchor: "workspace.summary",
+      mode: "replace",
+      route: "/workspaces/[id]",
+      aliases: ["workspace-summary"],
+    },
+  },
   // …
 ];
 
 export const registry = createRegistry<StudioBucket, StudioSurface, StudioStatus>({
   pages: STUDIO_PAGES,
+  insertionPoints: STUDIO_INSERTION_POINTS,
   surfaceOrder: ["web", "ios", "macos", "shell", "cross"],
   defaultSurface: "cross",
   bucketLabel: (b) =>
