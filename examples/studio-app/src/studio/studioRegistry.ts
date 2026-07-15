@@ -66,6 +66,19 @@ export const pages: readonly StudioAppPage[] = [
     source: ["src/app-shell/StudioHudsonApp.tsx"],
   },
   {
+    href: "/studio/foundations/scout",
+    label: "Scout connection",
+    bucket: "foundations",
+    surface: "runtime",
+    status: "preview",
+    blurb: "The project-owned Scout identity and server-mediated web messaging surface.",
+    source: [
+      ".studio/project.json",
+      "src/scout/server.ts",
+      "examples/studio-app/src/studio/StudioScoutPanel.tsx",
+    ],
+  },
+  {
     href: "/studio/proposals/stu-001-hudson-insertion-points",
     label: "STU-001 - Hudson insertion points",
     bucket: "proposals",

@@ -1,3 +1,5 @@
+import type { StudioScoutManifestConfig } from "../scout/types";
+
 export interface StudioProjectManifest {
   version?: 1;
   id: string;
@@ -9,6 +11,7 @@ export interface StudioProjectManifest {
   host?: string;
   preferredPort?: number;
   env?: Record<string, string>;
+  scout?: StudioScoutManifestConfig;
 }
 
 export interface EnabledStudio {

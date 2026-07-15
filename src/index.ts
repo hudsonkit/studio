@@ -5,3 +5,4 @@ export * from "./doc";
 export * from "./code";
 export * from "./injection";
 export * from "./atoms";
+export * from "./scout";

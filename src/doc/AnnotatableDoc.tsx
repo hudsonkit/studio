@@ -61,7 +61,9 @@ export interface AnnotatableDocProps {
   /**
    * Where the "Send pass" payload goes. When omitted, the payload is
    * surfaced in the ship preview only — useful for design-stage mocks.
-   * Wire `mcp__scout__messages_send` (or any DM transport) here in prod.
+   * Wire a server-owned transport here in production. Web apps should post to
+   * a same-origin route (for example `studio/scout/server`) rather than trying
+   * to invoke MCP or the Scout broker from the browser.
    */
   onSendPass?: (payload: SendPassPayload) => void | Promise<void>;
   /**

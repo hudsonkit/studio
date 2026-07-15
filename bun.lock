@@ -125,6 +125,7 @@
     "examples/studio-app": {
       "name": "studio-app",
       "dependencies": {
+        "@swc/helpers": "^0.5.15",
         "hudsonkit": "workspace:*",
         "lucide-react": "^0.574.0",
         "next": "^16.0.0",

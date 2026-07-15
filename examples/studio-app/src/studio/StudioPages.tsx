@@ -28,6 +28,7 @@ import {
   THEME_SAMPLE,
 } from "@/studio/content/codeSamples";
 import { STU_001_HUDSON_INSERTION_POINTS } from "@/studio/content/proposals";
+import { StudioScoutPanel } from "@/studio/StudioScoutPanel";
 import {
   HOME_HREF,
   pages,
@@ -102,6 +103,9 @@ const proposalBodies: Record<string, string> = {
 
 export function renderStudioPage({ pathname, page }: RenderContext) {
   if (pathname === HOME_HREF) return <HomePage />;
+  if (page?.href === "/studio/foundations/scout") {
+    return <ScoutPage page={page} />;
+  }
   if (page?.bucket === "proposals") {
     return (
       <MarkdownPage
@@ -129,6 +133,17 @@ export function renderStudioPage({ pathname, page }: RenderContext) {
   }
   if (page) return <ReferencePage page={page} sample={referenceSamples[page.href]} />;
   return <NotFoundPage />;
+}
+
+function ScoutPage({ page }: { page: StudioAppPage }) {
+  return (
+    <main className="w-full px-6 py-10 lg:px-7">
+      <PageHeader page={page} />
+      <div className="max-w-[1100px]">
+        <StudioScoutPanel />
+      </div>
+    </main>
+  );
 }
 
 function HomePage() {

@@ -13,6 +13,8 @@ type ShellAppConfig = Pick<
   "id" | "name" | "description" | "agentContext" | "icon" | "leftPanel" | "rightPanel"
 >;
 
+const DefaultStudioProvider: HudsonApp["Provider"] = ({ children }) => <>{children}</>;
+
 export interface StudioHudsonRenderContext<
   Bucket extends string,
   Surface extends string,
@@ -45,6 +47,7 @@ export interface StudioHudsonAppProps<
   navActions?: ReactNode;
   useNavActions?: () => ReactNode | null;
   routerProvider?: ComponentType<{ children: ReactNode }>;
+  provider?: HudsonApp["Provider"];
   theme?: false | Omit<ThemeProviderProps, "children">;
   assistant?: boolean;
   managedTheme?: boolean;
@@ -74,6 +77,7 @@ export function StudioHudsonApp<
   navActions = null,
   useNavActions,
   routerProvider: RouterProvider = Fragment,
+  provider: StudioProvider = DefaultStudioProvider,
   theme = {},
   assistant = false,
   managedTheme = false,
@@ -106,8 +110,6 @@ export function StudioHudsonApp<
       </div>
     );
   };
-
-  const StudioProvider = ({ children }: { children: ReactNode }) => <>{children}</>;
 
   const hudsonApp: HudsonApp = {
     ...app,

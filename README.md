@@ -34,6 +34,8 @@ Then open `http://studio.studio.local`.
 | `studio/doc` | `EngMarkdown` (react-markdown + highlight.js with `buildFileHref` and `viewableExtensions` overrides), `EngDocSheet` (bordered frame), `DataRow` (label/value primitive). |
 | `studio/code` | `CodeViewer` (CodeMirror 6, read-only). `themeDetection` accepts `media` \| `data-attribute` \| `controlled`. `theme` builder defaults to `studioCodeTheme`. 17-language pack via `languageForFilename`. |
 | `studio/injection` | Reference runtime for registered study injection: URL/storage activation, before/after compare, and `StudioRegisteredInjectionHost` for resolving studies from insertion-point ids. |
+| `studio/scout` | Browser client, shared types, and centralized paths for a Studio-owned Scout connection. |
+| `studio/scout/server` | Server-only adapter that resolves the configured Studio agent and forwards messages through Scout's web API. |
 | `studio/atoms` | `StatusPill` primitive (tone + label + variant). `createStatusPalette<Status>(map)` binds it to a consumer's status union and returns `statusToTone` / `statusToLabel` / `statusToColor`. |
 | `studio/router` | `StudioRouterProvider`, `useStudioRouter`, `vanillaRouter`. Default fallback uses `<a>` + `window.location`. |
 | `studio/router/next` | `NextRouterProvider` — drop-in adapter that wires `next/link` + `next/navigation` into the studio router context. Next.js consumers only. |
@@ -163,6 +165,41 @@ Low-level commands still exist for debugging: `bun run local install` installs
 the shared edge without registering a project, `bun run local enable` only
 updates the machine registry, and `bun run local edge` runs the supervisor and
 Caddy in the foreground.
+
+## Scout connection
+
+A Studio can belong to a Scout agent by adding a portable selector and the
+local Scout web origin to `.studio/project.json`:
+
+```json
+{
+  "scout": {
+    "webBaseUrl": "http://127.0.0.1:43120",
+    "identity": {
+      "agent": "studio",
+      "label": "Studio agent"
+    }
+  }
+}
+```
+
+The selector is deliberately not a machine-specific agent id. The server
+resolves `studio` against Scout's exact ids, definition ids, handles, and names
+at runtime. This keeps the project manifest portable while still routing to one
+unambiguous agent.
+
+Studio resolves connection status and the portable identity through its
+same-origin `/api/scout` route. The server-only `studio/scout/server` adapter
+also supports headless message and request delivery without exposing broker
+details to client code.
+
+For interactive work, the first-party app mounts Scout's native
+`/embed/context-capture` composer in a drawer available on every Studio page.
+Studio owns the context tray around it: current page, local URL, selected text,
+and explicit notes remain visible and editable before they are attached. Scout
+continues to own agent selection, attachments, conversation creation, and the
+actual send. `/studio/foundations/scout` remains the connection overview; if
+Scout is not running, Studio stays usable and the drawer provides a retry path.
 
 ## Design assumptions
 

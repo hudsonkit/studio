@@ -7,6 +7,8 @@ import {
   normalizeStudioHost,
   normalizeStudioId,
 } from "./ids";
+import { normalizeScoutWebBaseUrl } from "../scout/paths";
+import type { StudioScoutManifestConfig } from "../scout/types";
 import type { StudioProjectManifest } from "./types";
 
 export const STUDIO_PROJECT_MANIFEST_PATH = ".studio/project.json";
@@ -21,6 +23,7 @@ export interface CreateProjectManifestOptions {
   host?: string;
   preferredPort?: number;
   env?: Record<string, string>;
+  scout?: StudioScoutManifestConfig;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -73,6 +76,33 @@ function optionalEnv(value: unknown): Record<string, string> | undefined {
   return env;
 }
 
+function optionalScout(value: unknown): StudioScoutManifestConfig | undefined {
+  if (value === undefined) return undefined;
+  if (!isRecord(value)) {
+    throw new Error("scout must be an object.");
+  }
+
+  const webBaseUrl = optionalString(value.webBaseUrl, "scout.webBaseUrl");
+  if (!webBaseUrl) {
+    throw new Error("scout.webBaseUrl is required.");
+  }
+  if (!isRecord(value.identity)) {
+    throw new Error("scout.identity must be an object.");
+  }
+  const agent = optionalString(value.identity.agent, "scout.identity.agent");
+  if (!agent) {
+    throw new Error("scout.identity.agent is required.");
+  }
+
+  return {
+    webBaseUrl: normalizeScoutWebBaseUrl(webBaseUrl),
+    identity: {
+      agent,
+      label: optionalString(value.identity.label, "scout.identity.label"),
+    },
+  };
+}
+
 export function parseStudioProjectManifest(
   value: unknown,
   source = STUDIO_PROJECT_MANIFEST_PATH,
@@ -103,6 +133,7 @@ export function parseStudioProjectManifest(
     host: host ? normalizeStudioHost(host) : undefined,
     preferredPort: optionalPort(value.preferredPort, "preferredPort"),
     env: optionalEnv(value.env),
+    scout: optionalScout(value.scout),
   };
 }
 
@@ -124,6 +155,23 @@ export async function hasStudioProjectManifest(repo: string): Promise<boolean> {
     return true;
   } catch {
     return false;
+  }
+}
+
+export async function findStudioProjectRoot(
+  startDirectory = process.cwd(),
+): Promise<string> {
+  let current = resolve(startDirectory);
+
+  while (true) {
+    if (await hasStudioProjectManifest(current)) return current;
+    const parent = dirname(current);
+    if (parent === current) {
+      throw new Error(
+        `Could not find ${STUDIO_PROJECT_MANIFEST_PATH} from ${startDirectory}.`,
+      );
+    }
+    current = parent;
   }
 }
 

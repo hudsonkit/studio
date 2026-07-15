@@ -7,5 +7,12 @@
   "healthPath": "/studio",
   "rootPath": "/studio",
   "host": "studio.studio.local",
-  "preferredPort": 5191
+  "preferredPort": 5191,
+  "scout": {
+    "webBaseUrl": "http://127.0.0.1:43120",
+    "identity": {
+      "agent": "studio",
+      "label": "Studio agent"
+    }
+  }
 }

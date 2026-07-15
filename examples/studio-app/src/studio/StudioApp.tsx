@@ -1,7 +1,7 @@
 "use client";
 
 import { createElement } from "react";
-import { Boxes, Compass } from "lucide-react";
+import { Boxes, Compass, Send } from "lucide-react";
 import { StudioHudsonApp } from "studio/app-shell";
 import { NextRouterProvider } from "studio/router/next";
 import { renderStudioPage } from "@/studio/StudioPages";
@@ -12,6 +12,7 @@ import {
   registry,
   statusPalette,
 } from "@/studio/studioRegistry";
+import { StudioScoutProvider, useStudioScout } from "@/studio/StudioScoutProvider";
 
 export function StudioApp() {
   return (
@@ -32,6 +33,8 @@ export function StudioApp() {
       renderStatusPill={(status) => statusPalette.StatusPill({ status })}
       renderPage={renderStudioPage}
       homeHref={HOME_HREF}
+      navActions={<ScoutNavAction />}
+      provider={StudioScoutProvider}
       routerProvider={NextRouterProvider}
       theme={{
         storageKey: "studio.app.theme",
@@ -39,5 +42,20 @@ export function StudioApp() {
         defaultTemplate: "hudson",
       }}
     />
+  );
+}
+
+function ScoutNavAction() {
+  const { open, openScout } = useStudioScout();
+  return (
+    <button
+      type="button"
+      onClick={openScout}
+      aria-expanded={open}
+      className="inline-flex items-center gap-2 border border-studio-rule px-3 py-1.5 font-mono text-[9px] uppercase tracking-[0.14em] text-studio-ink-faint transition hover:border-studio-rule-strong hover:text-studio-ink-strong"
+    >
+      Message Scout
+      <Send size={11} />
+    </button>
   );
 }

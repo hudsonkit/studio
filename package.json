@@ -17,6 +17,8 @@
     "./doc": "./src/doc/index.ts",
     "./code": "./src/code/index.ts",
     "./local": "./src/local/index.ts",
+    "./scout": "./src/scout/index.ts",
+    "./scout/server": "./src/scout/server.ts",
     "./injection": "./src/injection/index.tsx",
     "./atoms": "./src/atoms/index.ts",
     "./router": "./src/router/index.ts",
