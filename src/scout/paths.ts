@@ -1,5 +1,7 @@
 import type { StudioScoutComposerInput } from "./types";
 
+export const STUDIO_SCOUT_WEB_BASE_URL_ENV = "STUDIO_SCOUT_WEB_BASE_URL";
+
 export const studioScoutPaths = {
   studioApi: {
     connection: "/api/scout",

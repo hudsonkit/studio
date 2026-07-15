@@ -1,5 +1,10 @@
 import { findStudioProjectRoot, readStudioProjectManifest } from "../local/manifest";
-import { scoutWebApiUrl, studioScoutPaths } from "./paths";
+import {
+  normalizeScoutWebBaseUrl,
+  scoutWebApiUrl,
+  STUDIO_SCOUT_WEB_BASE_URL_ENV,
+  studioScoutPaths,
+} from "./paths";
 import type {
   StudioScoutAgentSummary,
   StudioScoutConnection,
@@ -29,6 +34,20 @@ interface ResolvedScoutRuntime {
   studioLabel: string;
   config: StudioScoutManifestConfig;
   agent: StudioScoutAgentSummary;
+}
+
+type StudioScoutEnvironment = Record<string, string | undefined>;
+
+export function resolveStudioScoutConfig(
+  config: StudioScoutManifestConfig,
+  env: StudioScoutEnvironment = process.env,
+): StudioScoutManifestConfig {
+  const webBaseUrl = env[STUDIO_SCOUT_WEB_BASE_URL_ENV]?.trim();
+  if (!webBaseUrl) return config;
+  return {
+    ...config,
+    webBaseUrl: normalizeScoutWebBaseUrl(webBaseUrl),
+  };
 }
 
 function text(value: unknown): string | undefined {
@@ -140,12 +159,13 @@ async function resolveRuntime(
   if (!manifest.scout) {
     throw new Error("This Studio has no Scout configuration.");
   }
-  const agent = await resolveStudioScoutAgent(manifest.scout, fetchImpl);
+  const config = resolveStudioScoutConfig(manifest.scout);
+  const agent = await resolveStudioScoutAgent(config, fetchImpl);
   return {
     repo,
     studioId: manifest.id,
     studioLabel: manifest.label ?? manifest.id,
-    config: manifest.scout,
+    config,
     agent,
   };
 }
@@ -168,18 +188,20 @@ export async function inspectStudioScoutConnection(
     };
   }
 
+  const config = resolveStudioScoutConfig(manifest.scout);
+
   try {
-    const agent = await resolveStudioScoutAgent(manifest.scout, fetchImpl);
+    const agent = await resolveStudioScoutAgent(config, fetchImpl);
     return {
       configured: true,
       connected: true,
       studio,
       identity: {
-        selector: manifest.scout.identity.agent,
-        label: manifest.scout.identity.label ?? agent.name ?? agent.handle ?? agent.id,
+        selector: config.identity.agent,
+        label: config.identity.label ?? agent.name ?? agent.handle ?? agent.id,
         agent,
       },
-      webBaseUrl: manifest.scout.webBaseUrl,
+      webBaseUrl: config.webBaseUrl,
       error: null,
     };
   } catch (error) {
@@ -188,12 +210,12 @@ export async function inspectStudioScoutConnection(
       connected: false,
       studio,
       identity: {
-        selector: manifest.scout.identity.agent,
-        label: manifest.scout.identity.label ?? manifest.scout.identity.agent,
+        selector: config.identity.agent,
+        label: config.identity.label ?? config.identity.agent,
         agent: null,
       },
-      webBaseUrl: manifest.scout.webBaseUrl,
-      error: connectionError(error, manifest.scout.webBaseUrl),
+      webBaseUrl: config.webBaseUrl,
+      error: connectionError(error, config.webBaseUrl),
     };
   }
 }

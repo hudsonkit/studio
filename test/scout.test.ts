@@ -8,6 +8,7 @@ import { studioScoutComposerUrl } from "../src/scout/paths";
 import {
   postStudioScoutMessage,
   resolveStudioScoutAgent,
+  resolveStudioScoutConfig,
 } from "../src/scout/server";
 import type { StudioScoutManifestConfig } from "../src/scout/types";
 
@@ -66,6 +67,17 @@ describe("Studio Scout composer", () => {
     expect(JSON.parse(url.searchParams.get("context") ?? "[]")).toEqual([
       { label: "Page", value: "Package registry" },
     ]);
+  });
+});
+
+describe("Studio Scout runtime configuration", () => {
+  test("allows a worktree preview to override only the Scout web origin", () => {
+    expect(resolveStudioScoutConfig(config, {
+      STUDIO_SCOUT_WEB_BASE_URL: "http://127.0.0.1:43517/",
+    })).toEqual({
+      ...config,
+      webBaseUrl: "http://127.0.0.1:43517",
+    });
   });
 });
 
