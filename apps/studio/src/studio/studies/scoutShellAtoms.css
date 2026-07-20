@@ -1,0 +1,400 @@
+/*
+ * Scout shell atoms — first-pass token sheet.
+ *
+ * Scoped under `.scout-atoms` so the rest of Studio is untouched.
+ * These are the literal token candidates OpenScout should port back
+ * into `ScoutThemeColors` / `ScoutPalette` (alpha-tolerant for the
+ * Window Material opacity slider; derived from --hud-bg / --hud-ink
+ * so they re-resolve per theme preset).
+ */
+
+.scout-atoms {
+  /* ---- Surface elevation (R1 baseline + R3 from the design brief) ----
+     Three deliberate luminance steps off the canvas. The rail sits BELOW
+     content (recedes); the inspector sits ABOVE content (lifts forward).
+     Steps are intentionally small (~3–5% luminance) so they read as
+     elevation, not as separate panels. */
+  --scout-surface-rail:      color-mix(in oklab, var(--hud-bg) 88%, black 12%);
+  --scout-surface-content:   var(--hud-bg);
+  --scout-surface-inspector: color-mix(in oklab, var(--hud-bg) 88%, var(--hud-ink) 12%);
+
+  /* Hairline between layers — slightly stronger than --studio-rule because
+     the eye needs help reading the elevation step. */
+  --scout-surface-divider:   color-mix(in oklab, var(--hud-ink) 18%, transparent);
+
+  /* ---- Selection (R2) ----
+     Solid same-hue lift; no left-edge accent bar, no white-alpha wash.
+     Anchor selection on the leading status dot, not on a bar. */
+  --scout-row-selected-bg:    color-mix(in oklab, var(--scout-surface-content) 84%, var(--hud-ink) 16%);
+  --scout-row-selected-stroke:color-mix(in oklab, var(--hud-ink) 22%, transparent);
+  --scout-row-hover-bg:       color-mix(in oklab, var(--scout-surface-content) 92%, var(--hud-ink) 8%);
+
+  /* ---- Page header (R3) ----
+     One title scale, one count-chip treatment, one trailing action lane.
+     Title intentionally smaller than Studio's marketing h1 — Scout's surface
+     headers are workspace chrome, not landing-page typography. */
+  --scout-header-title-size:  14px;
+  --scout-header-title-weight:600;
+  --scout-header-height:      52px;
+  --scout-header-pad-x:       16px;
+
+  /* ---- Count chip (canonical = Agents "98 AGENTS" pill) ----
+     Uppercase, tiny, slightly recessed surface, accent NOT used. */
+  --scout-chip-bg:     color-mix(in oklab, var(--hud-ink) 8%, transparent);
+  --scout-chip-border: color-mix(in oklab, var(--hud-ink) 14%, transparent);
+  --scout-chip-fg:     color-mix(in oklab, var(--hud-ink) 78%, transparent);
+
+  /* ---- Inspector section rhythm (R4) ----
+     One spacing token across every inspector section so the panels become
+     visually interchangeable (Agents inspector === Repos inspector === any
+     future inspector). */
+  --scout-inspector-section-gap:    20px;  /* between sections */
+  --scout-inspector-label-gap:       8px;  /* eyebrow -> content */
+  --scout-inspector-row-gap:         6px;  /* between KV rows inside a section */
+  --scout-inspector-pad-x:          16px;
+  --scout-inspector-pad-y:          16px;
+
+  /* ---- Eyebrows (R1 from design-review-brief) ----
+     Lift the default off .inkFaint so structural labels read at a glance.
+     Hierarchy still comes from size+weight+tracking, not opacity. */
+  --scout-eyebrow-fg:     color-mix(in oklab, var(--hud-ink) 62%, transparent);
+  --scout-eyebrow-size:   9px;
+  --scout-eyebrow-tracking:0.18em;
+}
+
+/* ============================================================ */
+/* Faux Scout shell                                             */
+/* ============================================================ */
+
+.scout-atoms .shell {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 320px;
+  height: 540px;
+  border: 1px solid var(--scout-surface-divider);
+  border-radius: 8px;
+  overflow: hidden;
+  font-family: var(--studio-font-sans);
+}
+
+.scout-atoms .shell-rail {
+  background: var(--scout-surface-rail);
+  border-right: 1px solid var(--scout-surface-divider);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 0;
+  gap: 6px;
+}
+
+.scout-atoms .shell-rail-spacer { flex: 1; }
+
+.scout-atoms .rail-icon {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  color: color-mix(in oklab, var(--hud-ink) 55%, transparent);
+  border-radius: 6px;
+}
+
+.scout-atoms .rail-icon[data-active="true"] {
+  background: color-mix(in oklab, var(--scout-accent) 18%, transparent);
+  color: var(--hud-ink);
+}
+
+.scout-atoms .shell-content {
+  background: var(--scout-surface-content);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.scout-atoms .shell-inspector {
+  background: var(--scout-surface-inspector);
+  border-left: 1px solid var(--scout-surface-divider);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- Page header ---- */
+.scout-atoms .page-header {
+  height: var(--scout-header-height);
+  padding: 0 var(--scout-header-pad-x);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--scout-surface-divider);
+  flex-shrink: 0;
+}
+
+.scout-atoms .page-header-title {
+  font-size: var(--scout-header-title-size);
+  font-weight: var(--scout-header-title-weight);
+  color: var(--hud-ink);
+  letter-spacing: -0.005em;
+}
+
+.scout-atoms .page-header-spacer { flex: 1; }
+
+.scout-atoms .count-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--scout-chip-bg);
+  border: 1px solid var(--scout-chip-border);
+  color: var(--scout-chip-fg);
+  font-family: var(--studio-font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.scout-atoms .action-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.scout-atoms .action-segmented {
+  display: inline-flex;
+  border-radius: 6px;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--hud-ink) 6%, transparent);
+  border: 1px solid var(--scout-surface-divider);
+}
+
+.scout-atoms .action-segmented button {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: color-mix(in oklab, var(--hud-ink) 65%, transparent);
+  font: inherit;
+  font-size: 11px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.scout-atoms .action-segmented button[data-active="true"] {
+  background: color-mix(in oklab, var(--scout-accent) 22%, transparent);
+  color: var(--hud-ink);
+}
+
+.scout-atoms .action-button {
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--scout-surface-divider);
+  border-radius: 6px;
+  color: color-mix(in oklab, var(--hud-ink) 72%, transparent);
+  font: inherit;
+  font-size: 11px;
+  padding: 4px 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ---- List / rows ---- */
+.scout-atoms .list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.scout-atoms .list-col-headers {
+  display: grid;
+  grid-template-columns: 24px 1fr 80px;
+  align-items: center;
+  padding: 6px var(--scout-header-pad-x);
+  font-family: var(--studio-font-mono);
+  font-size: var(--scout-eyebrow-size);
+  letter-spacing: var(--scout-eyebrow-tracking);
+  text-transform: uppercase;
+  color: var(--scout-eyebrow-fg);
+}
+
+.scout-atoms .row {
+  display: grid;
+  grid-template-columns: 24px 1fr 80px;
+  align-items: center;
+  padding: 7px var(--scout-header-pad-x);
+  font-size: 12.5px;
+  color: color-mix(in oklab, var(--hud-ink) 90%, transparent);
+  cursor: pointer;
+  border-left: 0 !important; /* explicit: no left-edge accent bar */
+  position: relative;
+}
+
+.scout-atoms .row:hover { background: var(--scout-row-hover-bg); }
+
+.scout-atoms .row[data-selected="true"] {
+  background: var(--scout-row-selected-bg);
+  box-shadow: inset 0 1px 0 var(--scout-row-selected-stroke),
+              inset 0 -1px 0 var(--scout-row-selected-stroke);
+  color: var(--hud-ink);
+}
+
+.scout-atoms .row-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--hud-ink) 35%, transparent);
+}
+
+.scout-atoms .row[data-selected="true"] .row-dot {
+  background: var(--scout-accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--scout-accent) 25%, transparent);
+}
+
+.scout-atoms .row-status-live { background: var(--hud-status-ok) !important; }
+.scout-atoms .row-status-warn { background: var(--hud-status-warn) !important; }
+.scout-atoms .row-status-idle { background: color-mix(in oklab, var(--hud-ink) 35%, transparent) !important; }
+
+.scout-atoms .row-meta {
+  font-family: var(--studio-font-mono);
+  font-size: 11px;
+  color: color-mix(in oklab, var(--hud-ink) 60%, transparent);
+  text-align: right;
+}
+
+/* ---- Inspector ---- */
+.scout-atoms .inspector-header {
+  height: var(--scout-header-height);
+  padding: 0 var(--scout-inspector-pad-x);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--scout-surface-divider);
+}
+
+.scout-atoms .inspector-body {
+  padding: var(--scout-inspector-pad-y) var(--scout-inspector-pad-x);
+  display: flex;
+  flex-direction: column;
+  gap: var(--scout-inspector-section-gap);
+  overflow-y: auto;
+}
+
+.scout-atoms .inspector-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--scout-inspector-label-gap);
+}
+
+.scout-atoms .eyebrow {
+  font-family: var(--studio-font-mono);
+  font-size: var(--scout-eyebrow-size);
+  letter-spacing: var(--scout-eyebrow-tracking);
+  text-transform: uppercase;
+  color: var(--scout-eyebrow-fg);
+  font-weight: 600;
+}
+
+.scout-atoms .kv-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  row-gap: var(--scout-inspector-row-gap);
+  font-size: 11.5px;
+}
+
+.scout-atoms .kv-grid dt {
+  color: color-mix(in oklab, var(--hud-ink) 60%, transparent);
+  font-family: var(--studio-font-mono);
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+}
+
+.scout-atoms .kv-grid dd {
+  color: var(--hud-ink);
+  text-align: right;
+  font-family: var(--studio-font-mono);
+  font-size: 11px;
+  margin: 0;
+}
+
+.scout-atoms .stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px 12px;
+}
+
+.scout-atoms .stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.scout-atoms .stat-value {
+  font-family: var(--studio-font-mono);
+  font-size: 14px;
+  color: var(--hud-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.scout-atoms .stat-label {
+  font-family: var(--studio-font-mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--scout-eyebrow-fg);
+}
+
+.scout-atoms .context-bar {
+  height: 4px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--hud-ink) 10%, transparent);
+  overflow: hidden;
+}
+
+.scout-atoms .context-bar-fill {
+  height: 100%;
+  background: var(--scout-accent);
+  border-radius: 999px;
+}
+
+.scout-atoms .attention-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--studio-font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0 8px;
+  height: 20px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--hud-status-warn) 18%, transparent);
+  border: 1px solid color-mix(in oklab, var(--hud-status-warn) 32%, transparent);
+  color: var(--hud-status-warn);
+}
+
+/* ============================================================ */
+/* Baseline mode — same DOM, the "flat" tokens for compare      */
+/* ============================================================ */
+
+.scout-atoms[data-mode="baseline"] {
+  --scout-surface-rail:      var(--hud-bg);
+  --scout-surface-content:   var(--hud-bg);
+  --scout-surface-inspector: var(--hud-bg);
+  --scout-surface-divider:   color-mix(in oklab, var(--hud-ink) 10%, transparent);
+  --scout-eyebrow-fg:        color-mix(in oklab, var(--hud-ink) 38%, transparent);
+
+  /* Baseline selection: 2pt left accent bar + alpha wash (the disfavored
+     pattern called out in R2). Recreated faithfully so the compare is fair. */
+  --scout-row-selected-bg:   color-mix(in oklab, var(--scout-accent) 10%, transparent);
+  --scout-row-selected-stroke:transparent;
+}
+
+.scout-atoms[data-mode="baseline"] .row[data-selected="true"] {
+  box-shadow: inset 2px 0 0 0 var(--scout-accent);
+}
+
+.scout-atoms[data-mode="baseline"] .row[data-selected="true"] .row-dot {
+  /* baseline doesn't anchor selection on the dot — it stays neutral */
+  background: color-mix(in oklab, var(--hud-ink) 35%, transparent);
+  box-shadow: none;
+}

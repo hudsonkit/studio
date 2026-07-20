@@ -29,6 +29,7 @@ import {
 } from "@/studio/content/codeSamples";
 import { STU_001_HUDSON_INSERTION_POINTS } from "@/studio/content/proposals";
 import { StudioScoutPanel } from "@/studio/StudioScoutPanel";
+import { ScoutShellAtomsStudy } from "@/studio/studies/ScoutShellAtoms";
 import {
   HOME_HREF,
   pages,
@@ -130,6 +131,9 @@ export function renderStudioPage({ pathname, page }: RenderContext) {
   }
   if (page?.href === "/studio/samples/doc-viewer") {
     return <MarkdownPage page={page} body={DOC_SAMPLE} />;
+  }
+  if (page?.href === "/studio/studies/sco-proto-001-scout-shell-atoms") {
+    return <ScoutShellAtomsStudy page={page} />;
   }
   if (page) return <ReferencePage page={page} sample={referenceSamples[page.href]} />;
   return <NotFoundPage />;

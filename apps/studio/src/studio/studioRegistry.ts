@@ -16,7 +16,8 @@ export type Bucket =
   | "proposals"
   | "package"
   | "recipes"
-  | "samples";
+  | "samples"
+  | "studies";
 export type Surface = "vision" | "architecture" | "api" | "runtime";
 export type Status = "stable" | "proposal" | "preview" | "wip";
 
@@ -203,6 +204,20 @@ export const pages: readonly StudioAppPage[] = [
     blurb: "EngMarkdown rendering a short markdown payload.",
   },
   {
+    id: "sco-proto-001-scout-shell-atoms",
+    href: "/studio/studies/sco-proto-001-scout-shell-atoms",
+    label: "SCO-PROTO-001 · Scout shell atoms",
+    bucket: "studies",
+    surface: "architecture",
+    status: "preview",
+    blurb:
+      "Prototype of the four shared Scout shell atoms — elevation, selected-row, page header, inspector rhythm — proposed for port-back into ScoutTheme.",
+    source: [
+      "apps/studio/src/studio/studies/ScoutShellAtoms.tsx",
+      "apps/studio/src/studio/studies/scoutShellAtoms.css",
+    ],
+  },
+  {
     id: "studio-reference-target-study",
     href: "/studio/samples/targeted-study",
     label: "Targeted study sample",
@@ -237,6 +252,7 @@ export const registry = createRegistry<Bucket, Surface, Status>({
       package: "Package",
       recipes: "Recipes",
       samples: "Samples",
+      studies: "Studies",
     })[bucket],
   surfaceLabel: (surface) =>
     ({
@@ -267,4 +283,5 @@ export const BUCKETS = [
   { key: "package", title: "Subpaths" },
   { key: "recipes" },
   { key: "samples" },
+  { key: "studies" },
 ] as const;
