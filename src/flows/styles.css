@@ -1,0 +1,148 @@
+/* Imported by the host after Tailwind so Flows extends one shared pipeline. */
+@source "./**/*.{ts,tsx}";
+
+/* Semantic Hudson tokens exposed to the utilities used by Flows. */
+@theme inline {
+  --color-background: oklch(var(--background));
+  --color-foreground: oklch(var(--foreground));
+  --color-card: oklch(var(--card));
+  --color-card-foreground: oklch(var(--card-foreground));
+  --color-popover: oklch(var(--popover));
+  --color-popover-foreground: oklch(var(--popover-foreground));
+  --color-primary: oklch(var(--primary));
+  --color-primary-foreground: oklch(var(--primary-foreground));
+  --color-secondary: oklch(var(--secondary));
+  --color-secondary-foreground: oklch(var(--secondary-foreground));
+  --color-muted: oklch(var(--muted));
+  --color-muted-foreground: oklch(var(--muted-foreground));
+  --color-accent: oklch(var(--accent));
+  --color-accent-foreground: oklch(var(--accent-foreground));
+  --color-destructive: oklch(var(--destructive));
+  --color-destructive-foreground: oklch(var(--destructive-foreground));
+  --color-warning: oklch(var(--warning));
+  --color-success: oklch(var(--success));
+  --color-info: oklch(var(--info));
+  --color-border: oklch(var(--border));
+  --color-input: oklch(var(--input));
+  --color-ring: oklch(var(--ring));
+  --font-sans: var(--hud-font-sans);
+  --font-mono: var(--hud-font-mono);
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+}
+
+/* ── Flow / Atelier style conventions ─────────────────────────────────────
+   Use these classes instead of inventing one-off type/spacing.
+
+   Section header (inspector / left rail):
+     .flow-section-head
+
+   Mono eyebrow / label:
+     .flow-eyebrow
+
+   Row of label + value:
+     .flow-row
+
+   Panel list row (selectable):
+     .flow-list-row / .flow-list-row[data-active]
+
+   Dense mono body:
+     font-mono text-[11px] or text-[12px]
+*/
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: oklch(var(--background));
+  color: oklch(var(--foreground));
+  font-family: var(--hud-font-sans, system-ui, sans-serif);
+}
+
+.flow-section-head {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid color-mix(in oklch, oklch(var(--border)) 60%, transparent);
+  background: color-mix(in oklch, oklch(var(--muted)) 40%, transparent);
+  padding: 0.625rem 0.75rem;
+  font-family: var(--hud-font-mono, ui-monospace, monospace);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: oklch(var(--muted-foreground));
+}
+
+.flow-eyebrow {
+  font-family: var(--hud-font-mono, ui-monospace, monospace);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: oklch(var(--muted-foreground));
+}
+
+.flow-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.25rem 0;
+  font-size: 11px;
+}
+
+.flow-row > :first-child {
+  flex-shrink: 0;
+  font-family: var(--hud-font-mono, ui-monospace, monospace);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: oklch(var(--muted-foreground));
+}
+
+.flow-row > :last-child {
+  min-width: 0;
+  text-align: right;
+  word-break: break-all;
+  color: color-mix(in oklch, oklch(var(--foreground)) 90%, transparent);
+}
+
+.flow-list-row {
+  display: flex;
+  width: 100%;
+  cursor: pointer;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 0.25rem;
+  border: 1px solid transparent;
+  padding: 0.375rem 0.5rem;
+  text-align: left;
+  font-size: 11px;
+  color: oklch(var(--muted-foreground));
+  transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.flow-list-row:hover {
+  background: color-mix(in oklch, oklch(var(--muted)) 60%, transparent);
+  color: oklch(var(--foreground));
+}
+
+.flow-list-row[data-active="true"] {
+  border-color: color-mix(in oklch, oklch(var(--accent)) 30%, transparent);
+  background: color-mix(in oklch, oklch(var(--accent)) 10%, transparent);
+  color: oklch(var(--foreground));
+  font-weight: 500;
+}
+
+/* Frame scrollbar (Atelier / Frame convention) */
+.frame-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklch, oklch(var(--muted-foreground)) 30%, transparent) transparent;
+}

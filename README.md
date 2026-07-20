@@ -43,6 +43,36 @@ Then open `http://studio.studio.local`.
 | `studio/theme.css` | CSS file that aliases studio's `--studio-*` / `--scout-*` / `--status-*` / `--code-*` vars onto hudsonkit's `--hud-*` token contract. Consumers import this once; values flip with `[data-hudson-theme]`. |
 | `studio/injection.css` | Minimal styles for the Studio-mode injection frame. Consumers can import it as-is or copy the `.studio-injection*` class contract into their own app CSS. |
 | `studio/app-shell` | Hudson AppShell adapters: `StudioHudsonApp` for a complete registry-backed Hudson studio, plus `StudioContentProvider` / `StudioContentOutlet` for framework layouts that already own the shell. |
+| `studio/flows` | Spatial journey canvas, live embed registry, inspection UI, and `createStudioFlowsApp(...)` Hudson adapter. |
+| `studio/flows/model` | Flows file, journey, page, and component-tree model. |
+| `studio/flows/render` | Renderer for Flows component trees. |
+| `studio/flows/server` | File store, REST/MCP service, and discussion adapter. |
+
+## Flows
+
+Flows is Studio's native canvas for laying out whole product journeys while
+keeping each screen connected to a live product-owned design surface. Studio
+owns the model, service, renderer, state, and shell integration; consumers only
+register their embeds and navigation:
+
+```tsx
+import { createStudioFlowsApp } from "studio/flows";
+
+export const flowsApp = createStudioFlowsApp({
+  embeds: {
+    "candidate-orientation": { component: CandidateOrientation },
+  },
+  discuss: { projectName: "My product" },
+  onNavigateHome: () => navigate("/"),
+});
+```
+
+Run the service directly with `bun run flows:serve`. It stores documents under
+`~/.studio/flows` and exposes the REST and MCP endpoints used by a host route
+such as `/flows`. Use `bun run flows:smoke` for the end-to-end model/store/API
+smoke test. Tailwind v4 hosts should import `studio/flows/styles.css` after
+their `@import "tailwindcss"`; the stylesheet registers the Flows source scan,
+semantic tokens, and component CSS in the host's existing pipeline.
 
 ## Recommended app structure
 

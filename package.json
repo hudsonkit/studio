@@ -27,6 +27,11 @@
     "./theme.css": "./src/theme/aliases.css",
     "./injection.css": "./src/injection/styles.css",
     "./app-shell": "./src/app-shell/index.ts",
+    "./flows": "./src/flows/index.ts",
+    "./flows/model": "./src/flows/model.ts",
+    "./flows/render": "./src/flows/render.tsx",
+    "./flows/server": "./src/flows/server/index.ts",
+    "./flows/styles.css": "./src/flows/styles.css",
     "./doc.css": "./src/doc/eng-doc.css",
     "./shell.css": "./src/shell/shell.css"
   },
@@ -34,13 +39,16 @@
     "src"
   ],
   "bin": {
-    "studio-local": "./src/local/cli.ts"
+    "studio-local": "./src/local/cli.ts",
+    "studio-flows": "./src/flows/server/cli.ts"
   },
   "scripts": {
     "dev": "bun run --cwd examples/studio-app dev",
     "local": "bun src/local/cli.ts",
     "local:serve": "bun src/local/cli.ts serve",
     "local:edge": "bun src/local/cli.ts edge",
+    "flows:serve": "bun src/flows/server/cli.ts serve",
+    "flows:smoke": "bun src/flows/server/smoke.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
   },
@@ -67,6 +75,7 @@
     "@codemirror/view": "^6.43.0",
     "@lezer/highlight": "^1.2.0",
     "@uiw/react-codemirror": "^4.25.10",
+    "lucide-react": "^0.574.0",
     "react-markdown": "^9.0.0",
     "rehype-highlight": "^7.0.0",
     "remark-gfm": "^4.0.0"
