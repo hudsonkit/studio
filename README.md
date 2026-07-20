@@ -14,8 +14,8 @@ bun install
 bun dev
 ```
 
-Open [http://localhost:5191/studio](http://localhost:5191/studio). The example
-app is both a package reference and a small working Studio.
+Open [http://localhost:5191/studio](http://localhost:5191/studio). `apps/studio`
+is Studio's canonical first-party app as well as its live package reference.
 
 To register it with the shared local edge:
 
@@ -125,7 +125,7 @@ The first-party Studio app now uses a lightweight numbered proposal convention:
 - Proposal routes live under `/studio/proposals/<stu-id>-<slug>`.
 - Proposal pages are ordinary registry entries in the `proposals` bucket.
 - Long-form proposal bodies currently live in
-  `examples/studio-app/src/studio/content/proposals.ts` and render through
+  `apps/studio/src/studio/content/proposals.ts` and render through
   `EngMarkdown`.
 
 This is intentionally small: Studio already has the registry, shell, page strip,
@@ -179,7 +179,7 @@ the project's start command, then redirects back to the requested Studio URL.
 Useful commands:
 
 ```bash
-bun run local init --id studio --studio-dir examples/studio-app \
+bun run local init --id studio --studio-dir apps/studio \
   --start "bun next dev --hostname 0.0.0.0 --port {port}" \
   --health-path /studio --root-path /studio --preferred-port 5191
 
@@ -188,8 +188,8 @@ bun run local list
 bun run local caddyfile
 ```
 
-The checked-in Studio package manifest at `.studio/project.json` dogfoods this
-flow and registers the first-party example app as `studio.studio.local`.
+The checked-in Studio package manifest at `.studio/project.json` uses this flow
+to register the first-party app as `studio.studio.local`.
 
 Low-level commands still exist for debugging: `bun run local install` installs
 the shared edge without registering a project, `bun run local enable` only

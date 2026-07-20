@@ -1,0 +1,88 @@
+@import "tailwindcss";
+@import "hudsonkit/styles";
+@import "studio/theme.css";
+@import "studio/doc.css";
+@import "studio/shell.css";
+@import "studio/injection.css";
+
+@source "../app/**/*.{ts,tsx}";
+@source "../src/**/*.{ts,tsx}";
+@source "../node_modules/hudsonkit/src/**/*.{ts,tsx}";
+@source "../node_modules/studio/src/**/*.{ts,tsx}";
+
+@theme inline {
+  --color-studio-canvas: var(--studio-canvas);
+  --color-studio-canvas-alt: var(--studio-canvas-alt);
+  --color-studio-surface: var(--studio-surface);
+  --color-studio-ink: var(--studio-ink);
+  --color-studio-ink-strong: var(--studio-ink-strong);
+  --color-studio-ink-faint: var(--studio-ink-faint);
+  --color-studio-edge: var(--studio-edge);
+  --color-studio-rule: var(--studio-rule);
+  --color-studio-rule-strong: var(--studio-rule-strong);
+  --color-studio-chip-bg: var(--studio-chip-bg);
+  --color-studio-chip-border: var(--studio-chip-border);
+  --color-scout-accent: var(--scout-accent);
+  --color-scout-accent-soft: var(--scout-accent-soft);
+  --tracking-eyebrow: 0.18em;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+.studio-landing {
+  --studio-canvas: #f4f2eb;
+  --studio-canvas-alt: #ebe9e1;
+  --studio-surface: #faf9f5;
+  --studio-ink: #4d504c;
+  --studio-ink-strong: #1e211e;
+  --studio-ink-faint: #747a74;
+  --studio-rule: rgba(38, 54, 44, 0.13);
+  --studio-rule-strong: rgba(38, 54, 44, 0.28);
+  --studio-chip-bg: rgba(58, 87, 69, 0.075);
+  --studio-chip-border: rgba(38, 54, 44, 0.25);
+}
+
+.landing-dot-grid {
+  background-image: radial-gradient(rgba(38, 54, 44, 0.16) 0.7px, transparent 0.8px);
+  background-size: 14px 14px;
+}
+
+.landing-preview-shell::before,
+.landing-preview-shell::after {
+  position: absolute;
+  z-index: 10;
+  width: 10px;
+  height: 10px;
+  border-color: #a85c47;
+  pointer-events: none;
+  content: "";
+}
+
+.landing-preview-shell::before {
+  left: -1px;
+  top: -1px;
+  border-left: 1px solid;
+  border-top: 1px solid;
+}
+
+.landing-preview-shell::after {
+  bottom: -1px;
+  right: -1px;
+  border-bottom: 1px solid;
+  border-right: 1px solid;
+}
+
+.landing-flow-card {
+  aspect-ratio: 4 / 3;
+  box-shadow: 0 8px 20px rgba(28, 34, 29, 0.05);
+}
+
+body {
+  margin: 0;
+  background: var(--studio-canvas);
+  color: var(--studio-ink);
+  font-family: var(--studio-font-sans);
+}

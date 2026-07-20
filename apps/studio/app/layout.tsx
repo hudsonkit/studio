@@ -5,7 +5,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Studio",
   description:
-    "Studio is a Hudson-backed package of design-studio primitives — shell, registry, doc + code viewers, status atoms, router and theme adapters.",
+    "A spatial design environment for product flows, interface studies, and engineering notes.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

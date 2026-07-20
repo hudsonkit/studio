@@ -5,6 +5,7 @@
   "description": "Shared design-studio primitives: shell, page registry, doc + code viewers, atoms, router adapters. Internal; consumed via bun workspace.",
   "type": "module",
   "workspaces": [
+    "apps/*",
     "examples/*",
     "../hudson/packages/web/hudsonkit"
   ],
@@ -43,7 +44,7 @@
     "studio-flows": "./src/flows/server/cli.ts"
   },
   "scripts": {
-    "dev": "bun run --cwd examples/studio-app dev",
+    "dev": "bun run --cwd apps/studio dev",
     "local": "bun src/local/cli.ts",
     "local:serve": "bun src/local/cli.ts serve",
     "local:edge": "bun src/local/cli.ts edge",

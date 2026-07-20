@@ -42,7 +42,7 @@ export const insertionPoints = [
     surface: "runtime",
     route: "/studio/package/[slug]",
     allowedModes: ["replace", "after", "decorate"],
-    source: ["examples/studio-app/src/studio/StudioPages.tsx"],
+    source: ["apps/studio/src/studio/StudioPages.tsx"],
     blurb: "The rendered package-reference body below the page header.",
   },
 ] satisfies readonly StudioInsertionPoint<Surface>[];
@@ -75,7 +75,7 @@ export const pages: readonly StudioAppPage[] = [
     source: [
       ".studio/project.json",
       "src/scout/server.ts",
-      "examples/studio-app/src/studio/StudioScoutPanel.tsx",
+      "apps/studio/src/studio/StudioScoutPanel.tsx",
     ],
   },
   {
@@ -85,7 +85,7 @@ export const pages: readonly StudioAppPage[] = [
     surface: "architecture",
     status: "proposal",
     blurb: "A Hudson Kit insertion-point contract for Studio mode swaps across web and native surfaces.",
-    source: ["examples/studio-app/src/studio/content/proposals.ts"],
+    source: ["apps/studio/src/studio/content/proposals.ts"],
   },
   {
     href: "/studio/package/registry",
@@ -212,7 +212,7 @@ export const pages: readonly StudioAppPage[] = [
     status: "preview",
     source: [
       "src/registry/index.ts",
-      "examples/studio-app/src/studio/studioRegistry.ts",
+      "apps/studio/src/studio/studioRegistry.ts",
     ],
     blurb: "A normal Studio page that also declares its host-app insertion point.",
     target: {
