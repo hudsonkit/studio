@@ -26,3 +26,33 @@ export type {
   AnnotationProviderProps,
   MdNode,
 } from "./AnnotationContext";
+
+export {
+  annotationsToDecisions,
+  createWinnerDecision,
+  createTurnDecision,
+  getActiveTreatment,
+} from "./decisions";
+export type {
+  TreatmentDecision,
+  DecisionKind,
+  Treatment,
+  TreatmentId,
+} from "./decisions";
+
+export {
+  persistAnnotations,
+  fetchPersistedAnnotations,
+  getDefaultSidecarPath,
+} from "./persist";
+export type { PersistPayload, PersistResult } from "./persist";
+
+// Voice integration (re-export types from hudsonkit/voice for convenience when wiring dictation)
+export type {
+  UseVoiceInputOptions,
+  UseVoiceInputResult,
+  UseHudsonVoiceInputOptions,
+  UseHudsonVoiceInputResult,
+} from 'hudsonkit/voice';
+
+export type { VoiceInputShape } from './AnnotatableDoc';

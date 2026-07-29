@@ -54,6 +54,15 @@ export interface SendPassPayload {
   formatted: string;
 }
 
+export interface VoiceInputShape {
+  status?: string;
+  error?: string | null;
+  lastTranscript?: string | null;
+  start: () => Promise<void> | void;
+  stop: () => void;
+  isSupported?: boolean;
+}
+
 export interface AnnotatableDocProps {
   body: string;
   slug: string;
@@ -76,6 +85,37 @@ export interface AnnotatableDocProps {
   fromSlug?: string;
   compact?: boolean;
   className?: string;
+
+  /**
+   * Called whenever annotations change (add, edit, pin, delete).
+   * Use this to sync to disk, a local API, or external state so that
+   * agents running in Cursor, a scout session, terminal, etc. can pick up
+   * the commentary without you having to copy-paste.
+   *
+   * This is the main hook for the "human in browser → external agent picks it up"
+   * workflow. The annotations array includes both ephemeral and pinned.
+   */
+  onAnnotationsChange?: (annotations: Annotation[]) => void | Promise<void>;
+
+  /**
+   * Optional: a stable key for persisting decisions/annotations outside
+   * the browser (e.g. to a sidecar JSON file). The component itself doesn't
+   * write files (it's client code), but you can use this key in your
+   * onAnnotationsChange handler or in a paired server route to decide
+   * where to write (e.g. `.studio/annotations/${persistKey}.json`).
+   */
+  persistKey?: string;
+
+  /**
+   * Optional voice input result from hudsonkit/voice (recommended).
+   * When supplied, the mic button uses Hudson's STT (daemon-powered) instead
+   * of the browser Web Speech fallback. Transcripts are appended to the
+   * current draft note.
+   *
+   * See the README and .studio/AGENTS.md for the exact `useVoiceInput` pattern
+   * and how to combine it with `persistAnnotations`.
+   */
+  voiceInput?: VoiceInputShape;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -128,6 +168,9 @@ export function AnnotatableDoc({
   fromSlug,
   compact = false,
   className,
+  onAnnotationsChange,
+  persistKey,
+  voiceInput,
 }: AnnotatableDocProps) {
   const STORAGE_KEY = storageKey ?? `studio.annotations.${slug}`;
 
@@ -144,8 +187,21 @@ export function AnnotatableDoc({
   const [shipState, setShipState] = useState<
     "idle" | "sending" | "copied" | "sent"
   >("idle");
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
   const composerRef = useRef<HTMLTextAreaElement | null>(null);
   const rootRef = useRef<HTMLDivElement | null>(null);
+
+  // When hudsonkit voiceInput is provided, watch for transcripts and append
+  // them to the current draft (seamless into the composer).
+  useEffect(() => {
+    const transcript = voiceInput?.lastTranscript;
+    if (transcript) {
+      setDraftText((prev) =>
+        (prev ? prev + ' ' + transcript : transcript).trim(),
+      );
+    }
+  }, [voiceInput?.lastTranscript]);
 
   // Hydrate ephemeral state from sessionStorage so a refresh keeps the pass alive.
   useEffect(() => {
@@ -159,6 +215,17 @@ export function AnnotatableDoc({
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(annotations));
     } catch {}
   }, [annotations, STORAGE_KEY]);
+
+  // Notify external observers (Cursor, scout agents, other tools, file writers, etc.)
+  // so they can pick up new commentary without manual sync.
+  // The consumer is responsible for actually writing to disk / API if desired.
+  // `persistKey` is provided so the handler knows a stable name for sidecar files
+  // (e.g. `.studio/annotations/${persistKey || slug}.json`).
+  useEffect(() => {
+    if (onAnnotationsChange) {
+      void Promise.resolve(onAnnotationsChange(annotations)).catch(() => {});
+    }
+  }, [annotations, onAnnotationsChange]);
 
   useEffect(() => {
     if (draftAnchor && composerRef.current) {
@@ -378,6 +445,73 @@ export function AnnotatableDoc({
     window.setTimeout(() => el.classList.remove("anchor-flash"), 1200);
   }, []);
 
+  // Dictation: prefers hudsonkit voiceInput when provided (daemon-powered STT,
+  // better quality, consistent with the rest of the Hudson app).
+  // Falls back to browser Web Speech API.
+  const toggleDictation = useCallback(() => {
+    if (voiceInput) {
+      if (!voiceInput.isSupported) {
+        alert('Voice input is not supported in this environment.');
+        return;
+      }
+      if (voiceInput.status === 'recording' || isListening) {
+        voiceInput.stop();
+        setIsListening(false);
+      } else {
+        const maybePromise = voiceInput.start();
+        if (maybePromise && typeof (maybePromise as any).catch === 'function') {
+          (maybePromise as Promise<void>).catch(() => setIsListening(false));
+        }
+        setIsListening(true);
+      }
+      return;
+    }
+
+    // Browser fallback (Web Speech API)
+    const SpeechRec =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+    if (!SpeechRec) {
+      alert('Speech recognition not supported in this browser. Try Chrome or Edge, or wire hudsonkit/voice.');
+      return;
+    }
+
+    if (isListening && recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+      return;
+    }
+
+    const rec = new SpeechRec();
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.lang = 'en-US';
+
+    rec.onresult = (event: any) => {
+      let transcript = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
+      setDraftText((prev) => (prev ? prev + ' ' + transcript : transcript).trim());
+    };
+
+    rec.onerror = () => {
+      setIsListening(false);
+    };
+
+    rec.onend = () => {
+      setIsListening(false);
+    };
+
+    try {
+      rec.start();
+      recognitionRef.current = rec;
+      setIsListening(true);
+    } catch (e) {
+      setIsListening(false);
+    }
+  }, [isListening, voiceInput]);
+
   const ephemerals = useMemo(
     () => annotations.filter((a) => !a.pinned),
     [annotations],
@@ -572,6 +706,25 @@ export function AnnotatableDoc({
                   rows={3}
                 />
                 <div className="annotator-note__actions">
+                  <button
+                    type="button"
+                    onClick={toggleDictation}
+                    className={`btn btn--ghost ${isListening || voiceInput?.status === 'recording' ? 'is-listening' : ''}`}
+                    title={
+                      voiceInput
+                        ? voiceInput.error
+                          ? `Voice error: ${voiceInput.error}`
+                          : isListening || voiceInput.status === 'recording'
+                          ? 'Stop voice dictation (hudsonkit)'
+                          : 'Dictate using hudsonkit voice (or browser fallback)'
+                        : isListening
+                        ? 'Stop dictation'
+                        : 'Dictate (speech to text)'
+                    }
+                    disabled={voiceInput ? !voiceInput.isSupported : false}
+                  >
+                    {isListening || voiceInput?.status === 'recording' ? '◉' : '🎤'}
+                  </button>
                   <button
                     type="button"
                     onClick={cancelDraft}

@@ -8,3 +8,4 @@ dist
 .claude/settings.local.json
 # OpenScout local state
 .openscout/project.json
+examples/studio-app/.studio/

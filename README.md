@@ -243,6 +243,163 @@ Scout is not running, Studio stays usable and the drawer provides a retry path.
 
 Each subapp can adopt all of studio or any single subpath. Recipe assumes a Next.js studio at `<repo>/design/studio` linked to `studio` via relative path.
 
+### Stable local hostnames
+
+Studio has one persistent, per-user host process. Projects register desired
+routes with that host; individual dev servers never own Caddy or `dns-sd`
+processes. The canonical name is always derived from the Git repository, even
+when the Studio app is nested under `design/studio`:
+
+```text
+http://{repo}.studio.local
+```
+
+There is no port in the normal browser URL. The host binds a loopback HTTP edge
+on port 80. If a Caddy edge already owns port 80 (for example Scout's local
+edge), Studio detects its admin API and adds narrowly named routes which forward
+to Studio's persistent proxy. The upstream project may use any available port.
+
+#### Recommended package script
+
+**Always wrap `dev` with `studio dev`.** Bare `next dev` never registers a
+hostname — that is the whole point of this CLI. The simple development path:
+
+```json
+{
+  "scripts": {
+    "dev": "studio dev --port 3060 -- next dev --port 3060",
+    "dev:raw": "next dev --port 3060"
+  }
+}
+```
+
+`studio dev` starts the host in the background if needed, registers the Git
+repo and child upstream, sends a heartbeat every five seconds, forwards
+`SIGINT`/`SIGTERM` only to its own child, and unregisters on exit. `PORT` and
+`STUDIO_URL` are passed to the child. Omit `--port` to select the first available
+port at or above 3000; omit the command to run `bunx --bun next dev`.
+
+Keep `dev:raw` only as an escape hatch (port-only debugging). Day-to-day work
+should hit `http://{repo}.studio.local` with no port in the URL.
+
+Next.js 15+ blocks cross-origin dev assets unless the pretty hostname is listed.
+Add it next to loopback:
+
+```js
+// next.config.mjs
+const nextConfig = {
+  allowedDevOrigins: ["127.0.0.1", "localhost", "*.studio.local"],
+};
+```
+
+For a server script that owns its own process lifecycle, register that exact
+process instead. `exec` preserves the shell PID, allowing the host to remove the
+route as soon as the server exits:
+
+```json
+{
+  "scripts": {
+    "dev": "studio register --port 3060 --pid $$ && exec next dev --port 3060"
+  }
+}
+```
+
+Or use a heartbeat lease from an agent/process manager which cannot expose a
+stable PID:
+
+```sh
+studio register --port 3060 --ttl 30s
+studio heartbeat                  # refresh the lease
+studio heartbeat --port 3061      # atomic upstream update
+studio unregister                 # explicit removal
+```
+
+#### Host and project commands
+
+```sh
+studio host start       # optional: clients start it automatically
+studio host status
+studio host stop        # desired registrations remain persisted
+studio host run         # foreground/debug mode
+
+studio register --port 3060 [--host 127.0.0.1] [--pid 123] [--ttl 30s]
+studio heartbeat [--port 3061] [--pid 123] [--ttl 30s]
+studio unregister
+studio list [--json]
+```
+
+Identity options (`--repo`, `--root`, and `--cwd`) support unusual layouts and
+agentic callers. The default identity comes from `remote.origin.url`, falling
+back to the Git root directory name. Registration is an idempotent upsert for
+the same repository root. A different root which normalizes to an occupied
+hostname receives `409 Conflict` rather than silently stealing it. Each owner
+gets a lease; stale owners cannot unregister a replacement.
+
+#### Local host API
+
+The CLI speaks HTTP/JSON over the user-only Unix socket
+`~/.studio/host/api.sock`:
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/v1/health` or `/v1/status` | Host, edge, port, and route count |
+| `GET` | `/v1/registrations` | Public registration metadata (leases omitted) |
+| `PUT` | `/v1/registrations/{repo-id}` | Idempotent registration/upstream update |
+| `POST` | `/v1/registrations/{repo-id}/heartbeat` | Refresh lease and optionally update metadata |
+| `DELETE` | `/v1/registrations/{repo-id}` | Lease-checked explicit unregister |
+| `POST` | `/v1/shutdown` | Gracefully stop the per-user host |
+
+A registration body has this shape:
+
+```json
+{
+  "repo": { "name": "blink", "root": "/Users/me/dev/blink" },
+  "workingDirectory": "/Users/me/dev/blink/design/studio",
+  "upstream": { "host": "127.0.0.1", "port": 3060 },
+  "process": {
+    "pid": 12345,
+    "startedAt": "Sun Jul 19 14:00:00 2026",
+    "command": "next dev --port 3060"
+  },
+  "liveness": { "ttlMs": 15000 },
+  "leaseId": "returned-by-an-earlier-register-or-heartbeat"
+}
+```
+
+`process` or a nonzero heartbeat TTL is required; both may be supplied. The
+response includes the canonical URL, normalized registration, and `leaseId`.
+Heartbeat accepts `leaseId` plus optional `upstream`, `process`, `liveness`, or
+`workingDirectory` updates. A changed port takes effect without restarting the
+host or discovery process.
+
+#### Lifecycle, reconciliation, and security boundary
+
+Desired state is atomically stored in
+`~/.studio/host/registrations.json`; CLI leases live under
+`~/.studio/host/leases/`. The directory is mode `0700`, while the socket and
+state files are mode `0600`. The API and proxy bind only to loopback, and routes
+installed into a shared Caddy edge include a loopback source matcher. This is a
+same-local-user trust boundary, not a remote multi-tenant control plane: a
+process running as that user can register an upstream host, so do not expose or
+relay the Unix socket.
+
+Every two seconds the host reconciles persisted registrations with the live
+proxy/shared-Caddy routes and macOS mDNS publishers. It removes a registration
+when its repo or working directory disappears, its exact PID/start-time identity
+exits, or its heartbeat expires. On restart it reloads desired state, prunes
+stale clients before serving, safely terminates only previously recorded
+`dns-sd` children whose PID, start time, command, and hostname still match, and
+rebuilds missing discovery/proxy state. `studio dev` re-registers automatically
+if the host itself restarts.
+
+On macOS, `/usr/bin/dns-sd` is already present. No Caddy installation is needed
+when Studio can bind port 80 directly. If another service owns port 80, stop it
+or point `STUDIO_SHARED_CADDY_ADMIN` at a Caddy admin endpoint (default
+`127.0.0.1:2019`; set it to `off` to disable sharing). Useful isolated-test
+overrides are `STUDIO_HOST_DIR`, `STUDIO_PROXY_PORT`,
+`STUDIO_INTERNAL_PROXY_PORT`, `STUDIO_HOST_SWEEP_MS`, and
+`STUDIO_HOST_DISABLE_MDNS=1`.
+
 ### 1. Add studio + hudsonkit as bun workspace members
 
 Studio and hudsonkit are both consumed as regular dependencies, resolved from local sibling repos via bun workspaces — no `file:` copy install, no npm publish.
@@ -532,6 +689,52 @@ After verifying the studio pages still render, you can remove the local versions
 
 Keep the wrappers in `components/*` — they're now thin re-exports and they preserve your import paths.
 
+### 11. Annotations, decisions & local agents (the iteration loop)
+
+Studio ships a first-class system for human + agentic design iteration:
+
+- Use `<AnnotatableDoc>` (wraps `EngMarkdown`) for block/span-level notes, ephemeral "passes", and **pinned** decisions that survive.
+- Pin important feedback → it becomes structured `TreatmentDecision` (winner / turn / proposal / rejection / comparison) via `annotationsToDecisions`, `createWinnerDecision`, `createTurnDecision`.
+- `onAnnotationsChange` + `persistKey` (or the `persistAnnotations` helper) writes sidecar JSONs (convention: `.studio/annotations/<key>.json`).
+- Local agents (Cursor, scout, terminal Claude, filesystem watchers) simply read the sidecars — zero ceremony, no special protocol required.
+- The in-app hudson assistant can participate too via `createIterationCommands` (winners, turns, list, compare).
+
+**Voice / dictation**
+
+```tsx
+import { useVoiceInput } from 'hudsonkit/voice';
+import { AnnotatableDoc } from 'studio/doc';
+
+const voice = useVoiceInput({ onTranscript: (t) => { /* logging or side effects */ } });
+
+<AnnotatableDoc
+  body={md}
+  slug={slug}
+  docTitle={title}
+  persistKey={href}
+  voiceInput={voice}           // ← hudsonkit daemon STT when available
+  onAnnotationsChange={(anns) => persistAnnotations({ persistKey: href, slug: href, annotations: anns })}
+/>
+```
+
+When `voiceInput` is supplied, the 🎤 button in the composer uses Hudson's voice stack (better quality, consistent with the rest of your Hudson surfaces). Falls back to browser Web Speech API otherwise.
+
+**Turnkey with defineStudio**
+
+```ts
+const studio = defineStudio({
+  pages: [...],
+  // ... buckets, statuses etc.
+  iteration: { /* optional initial decisions */ },
+});
+
+// Then:
+useCommands={() => studio.createIterationCommands({ currentPage, decisions, onDecision })}
+<AnnotatableDoc ... onAnnotationsChange={(a) => studio.persistAnnotations({ ... })} />
+```
+
+See `src/doc/persist.ts` and the example at `examples/studio-app/.studio/AGENTS.md` for the full local-agent convention.
+
 ## Status
 
 | Area | State |
@@ -539,10 +742,11 @@ Keep the wrappers in `components/*` — they're now thin re-exports and they pre
 | Package scaffold, `package.json`, `tsconfig`, README | ✓ |
 | `studio/registry` | ✓ |
 | `studio/shell` | ✓ |
-| `studio/doc` | ✓ |
+| `studio/doc` (annotations, decisions, persistence, voice) | ✓ |
 | `studio/code` | ✓ |
 | `studio/atoms` | ✓ |
 | `studio/router` + `studio/router/next` | ✓ |
 | `studio/theme` + `studio/theme.css` (hudsonkit integration) | ✓ |
+| Iteration loop (local agents + in-app assistant via sidecars + commands) | ✓ |
 | Editor/markdown dedup via hudsonkit BYO | ⏳ waiting on hudsonkit PR |
 | Consumer wiring | Each subapp decides |

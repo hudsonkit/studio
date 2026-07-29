@@ -154,6 +154,12 @@ export interface StudioRegistry<
   ): FamilyGroup<Bucket, Surface, Status>[];
 }
 
+export { defineStudio } from "./define";
+export type {
+  DefineStudioOptions,
+  DefinedStudio,
+} from "./define";
+
 export interface CreateRegistryOptions<
   Bucket extends string,
   Surface extends string,

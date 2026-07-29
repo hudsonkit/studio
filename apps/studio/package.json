@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev --port 5191",
+    "dev": "studio dev --port 5191 -- next dev --port 5191",
+    "dev:raw": "next dev --port 5191",
     "build": "next build",
     "typecheck": "tsc --noEmit"
   },
