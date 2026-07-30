@@ -1,4 +1,5 @@
 export * from "./registry";
+export * from "./components";
 export * from "./router";
 export * from "./shell";
 export * from "./doc";

@@ -16,6 +16,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./registry": "./src/registry/index.ts",
+    "./components": "./src/components/index.ts",
+    "./components/verify": "./src/components/verify.ts",
     "./shell": "./src/shell/index.ts",
     "./doc": "./src/doc/index.ts",
     "./code": "./src/code/index.ts",

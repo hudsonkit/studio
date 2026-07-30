@@ -16,9 +16,11 @@
  * sibling create-hudson-app tool.
  */
 
+import { spawnSync } from 'child_process';
 import { mkdir, writeFile } from 'fs/promises';
 import { join } from 'path';
 import { argv } from 'process';
+import { fileURLToPath } from 'url';
 import {
   heartbeatProject,
   parseRegistrationArgs,
@@ -44,6 +46,7 @@ Commands:
   studio heartbeat [--port <changed-port>] [--pid <pid>] [--ttl 30s]
   studio unregister
   studio list [--json]
+  studio components <list|find|show|audit|verify|port|hashes> [--json]
   studio create-view <label> [--bucket <b>] [--surface <s>]
 
 Examples:
@@ -116,6 +119,26 @@ Usage:
     return 0;
   }
   throw new Error(`Unknown studio host action: ${action}`);
+}
+
+/**
+ * `studio components ...` delegates to src/components/cli.ts through bun:
+ * component manifests are TypeScript and bun loads them with no build step.
+ * stdio is inherited so --json output stays byte-clean and the child's exit
+ * code (audit/verify CI gates) propagates unchanged.
+ */
+function runComponents(componentArgs) {
+  const cliPath = fileURLToPath(new URL('../src/components/cli.ts', import.meta.url));
+  const result = spawnSync('bun', [cliPath, ...componentArgs], {
+    stdio: 'inherit',
+    cwd: process.cwd(),
+    env: process.env,
+  });
+  if (result.error) {
+    console.error(`Error: studio components requires bun on PATH (${result.error.message})`);
+    return 1;
+  }
+  return result.status ?? 1;
 }
 
 async function createView() {
@@ -247,6 +270,10 @@ async function main() {
     else for (const registration of result.body.registrations) {
       console.log(`${registration.hostname}\t${registration.upstream.host}:${registration.upstream.port}\t${registration.workingDirectory}`);
     }
+    return;
+  }
+  if (command === 'components') {
+    process.exitCode = runComponents(args.slice(1));
     return;
   }
   if (command === 'create-view' || command === 'create') {
