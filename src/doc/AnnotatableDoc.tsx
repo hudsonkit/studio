@@ -52,6 +52,18 @@ export interface SendPassPayload {
   annotations: Annotation[];
   /** Pre-formatted DM string, the same one shown in the ship-preview. */
   formatted: string;
+  /**
+   * Id of the `sendTargets` entry the pass was addressed to. Absent when the
+   * consumer did not supply `sendTargets`.
+   */
+  target?: string;
+}
+
+export interface SendPassTarget {
+  /** Stable id handed back on `SendPassPayload.target`. */
+  id: string;
+  /** Human-facing label for the target select. */
+  label: string;
 }
 
 export interface VoiceInputShape {
@@ -75,6 +87,14 @@ export interface AnnotatableDocProps {
    * to invoke MCP or the Scout broker from the browser.
    */
   onSendPass?: (payload: SendPassPayload) => void | Promise<void>;
+  /**
+   * Agents the pass can be dispatched to. With two or more entries the
+   * send-pass modal shows a small target select and the chosen id rides on
+   * `SendPassPayload.target`; absent or a single entry renders exactly as
+   * before. Routing the id is the consumer's `onSendPass` job — e.g. POST to
+   * its own `/api/scout/messages` with a matching `target`.
+   */
+  sendTargets?: SendPassTarget[];
   /**
    * sessionStorage key for the in-progress pass. Default:
    * `studio.annotations.<slug>` — set explicitly when two annotators
@@ -164,6 +184,7 @@ export function AnnotatableDoc({
   slug,
   docTitle,
   onSendPass,
+  sendTargets,
   storageKey,
   fromSlug,
   compact = false,
@@ -188,6 +209,9 @@ export function AnnotatableDoc({
     "idle" | "sending" | "copied" | "sent"
   >("idle");
   const [isListening, setIsListening] = useState(false);
+  const [sendTarget, setSendTarget] = useState<string | undefined>(
+    sendTargets?.[0]?.id,
+  );
   const recognitionRef = useRef<any>(null);
   const composerRef = useRef<HTMLTextAreaElement | null>(null);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -517,15 +541,20 @@ export function AnnotatableDoc({
     [annotations],
   );
 
-  const buildPayload = useCallback(
-    (): SendPassPayload => ({
+  const buildPayload = useCallback((): SendPassPayload => {
+    const target = sendTargets?.length
+      ? (sendTargets.some((entry) => entry.id === sendTarget)
+          ? sendTarget
+          : sendTargets[0]?.id)
+      : undefined;
+    return {
       docTitle,
       slug,
       annotations: ephemerals,
       formatted: formatDmPayload(docTitle, slug, ephemerals),
-    }),
-    [docTitle, slug, ephemerals],
-  );
+      target,
+    };
+  }, [docTitle, slug, ephemerals, sendTargets, sendTarget]);
 
   /**
    * Default action: copy the formatted payload to the clipboard, then
@@ -805,6 +834,9 @@ export function AnnotatableDoc({
           annotations={ephemerals}
           state={shipState}
           hasSink={Boolean(onSendPass)}
+          sendTargets={sendTargets}
+          selectedTarget={sendTarget}
+          onSelectTarget={setSendTarget}
           onCancel={() => setShipOpen(false)}
           onCopy={copyPass}
           onSend={sendPass}
@@ -939,6 +971,9 @@ function ShipModal({
   annotations,
   state,
   hasSink,
+  sendTargets,
+  selectedTarget,
+  onSelectTarget,
   onCancel,
   onCopy,
   onSend,
@@ -948,6 +983,9 @@ function ShipModal({
   annotations: Annotation[];
   state: "idle" | "sending" | "copied" | "sent";
   hasSink: boolean;
+  sendTargets?: SendPassTarget[];
+  selectedTarget?: string;
+  onSelectTarget?: (id: string) => void;
   onCancel: () => void;
   onCopy: () => void;
   onSend: () => void;
@@ -983,6 +1021,22 @@ function ShipModal({
           survive.
         </p>
         <pre className="annotator-modal__payload">{payload}</pre>
+        {sendTargets && sendTargets.length >= 2 ? (
+          <label className="annotator-modal__target">
+            <span className="eyebrow">send to</span>
+            <select
+              value={selectedTarget ?? sendTargets[0]?.id}
+              onChange={(e) => onSelectTarget?.(e.target.value)}
+              disabled={busy || finished}
+            >
+              {sendTargets.map((entry) => (
+                <option key={entry.id} value={entry.id}>
+                  {entry.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
         <div className="annotator-modal__actions">
           <button type="button" onClick={onCancel} className="btn btn--ghost">
             Cancel
@@ -1752,6 +1806,21 @@ const BASE_ANNOTATOR_CSS = `
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+.annotator-modal__target {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.annotator-modal__target select {
+  font: inherit;
+  font-size: 12px;
+  color: var(--annotator-ink);
+  background: var(--annotator-canvas-alt);
+  border: 1px solid var(--annotator-edge);
+  border-radius: 6px;
+  padding: 6px 8px;
 }
 `;
 

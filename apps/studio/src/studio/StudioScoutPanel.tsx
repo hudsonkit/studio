@@ -5,7 +5,7 @@ import { DataRow, EngDocSheet } from "studio/doc";
 import { useStudioScout } from "@/studio/StudioScoutProvider";
 
 export function StudioScoutPanel() {
-  const { connection, loading, openScout, refreshConnection } = useStudioScout();
+  const { agents, connection, loading, openScout, refreshConnection } = useStudioScout();
   const connected = connection?.connected === true;
 
   return (
@@ -57,6 +57,30 @@ export function StudioScoutPanel() {
             {connection?.identity ? `@${connection.identity.selector.replace(/^@/, "")}` : "—"}
           </span>
         </DataRow>
+        {agents.length > 0 ? (
+          <div className="border-t border-studio-rule px-4 py-3 sm:px-6">
+            <div className="font-mono text-[9px] uppercase tracking-[0.14em] text-studio-ink-faint">
+              Dispatch targets
+            </div>
+            <ul className="mt-2 grid gap-1.5">
+              {agents.map((option) => (
+                <li key={option.selector} className="flex items-center justify-between gap-3">
+                  <span className="inline-flex items-center gap-2 text-[12px] text-studio-ink">
+                    <CircleDot
+                      size={11}
+                      className={option.online ? "text-scout-accent" : "text-studio-ink-faint"}
+                    />
+                    {option.label}
+                  </span>
+                  <span className="font-mono text-[10px] text-studio-ink-faint">
+                    @{option.selector.replace(/^@/, "")}
+                    {option.online === null ? " · unknown" : option.online ? "" : " · offline"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
         {connection?.webBaseUrl ? (
           <a
             href={connection.webBaseUrl}

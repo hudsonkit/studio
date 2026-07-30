@@ -36,6 +36,7 @@ Then open `http://studio.studio.local`.
 | `studio/injection` | Reference runtime for registered study injection: URL/storage activation, before/after compare, and `StudioRegisteredInjectionHost` for resolving studies from insertion-point ids. |
 | `studio/scout` | Browser client, shared types, and centralized paths for a Studio-owned Scout connection. |
 | `studio/scout/server` | Server-only adapter that resolves the configured Studio agent and forwards messages through Scout's web API. |
+| `studio/agents` | Agent dispatch: `StudioAgentTarget` types, `createAgentRegistry(...)`, and pure HUD-011-aligned mapping helpers (`annotationPassToCapabilityRequest`, `receiptToCapabilityResult`). |
 | `studio/atoms` | `StatusPill` primitive (tone + label + variant). `createStatusPalette<Status>(map)` binds it to a consumer's status union and returns `statusToTone` / `statusToLabel` / `statusToColor`. |
 | `studio/router` | `StudioRouterProvider`, `useStudioRouter`, `vanillaRouter`. Default fallback uses `<a>` + `window.location`. |
 | `studio/router/next` | `NextRouterProvider` — drop-in adapter that wires `next/link` + `next/navigation` into the studio router context. Next.js consumers only. |
@@ -230,6 +231,32 @@ and explicit notes remain visible and editable before they are attached. Scout
 continues to own agent selection, attachments, conversation creation, and the
 actual send. `/studio/foundations/scout` remains the connection overview; if
 Scout is not running, Studio stays usable and the drawer provides a retry path.
+
+### Agent dispatch
+
+A Studio can also register the agents it may *send work to*, via an `agents`
+array beside the `scout` block in `.studio/project.json`:
+
+```json
+{
+  "agents": [
+    { "agent": "studio", "label": "Studio agent" },
+    { "agent": "atelier", "label": "Atelier agent", "intent": "request" }
+  ]
+}
+```
+
+Each entry is a portable Scout selector (never a machine-specific id) plus an
+optional label, preferred intent, and blurb. `createAgentRegistry` from
+`studio/agents` wraps the list; `postStudioScoutMessage` accepts an optional
+`target` and the receipt reports the resolved recipient as `targetAgentId`.
+Absent `agents`, everything falls back to `[scout.identity]`, so single-agent
+configs behave exactly as before. The first-party app lists the targets with
+live online state at `GET /api/scout/agents` and validates `target` on
+`POST /api/scout/messages`; the Scout drawer shows a picker when more than
+one target is registered. Dispatch shapes (`StudioCapabilityRequest` /
+`StudioCapabilityResult`) mirror Hudson's HUD-011 contract so a future
+Hudson-mediated bus can slot in later. See `docs/agent-dispatch.md`.
 
 ## Design assumptions
 

@@ -13,6 +13,7 @@ export type {
   Annotation,
   AnnotationLocation,
   SendPassPayload,
+  SendPassTarget,
 } from "./AnnotatableDoc";
 
 export {

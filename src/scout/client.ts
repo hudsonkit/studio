@@ -1,5 +1,6 @@
 import { studioScoutPaths } from "./paths";
 import type {
+  StudioScoutAgentsResponse,
   StudioScoutConnection,
   StudioScoutMessageInput,
   StudioScoutReceipt,
@@ -23,6 +24,12 @@ async function readJson<T>(response: Response): Promise<T> {
 export async function loadStudioScoutConnection(): Promise<StudioScoutConnection> {
   return readJson<StudioScoutConnection>(
     await fetch(studioScoutPaths.studioApi.connection, { cache: "no-store" }),
+  );
+}
+
+export async function loadStudioScoutAgents(): Promise<StudioScoutAgentsResponse> {
+  return readJson<StudioScoutAgentsResponse>(
+    await fetch(studioScoutPaths.studioApi.agents, { cache: "no-store" }),
   );
 }
 
