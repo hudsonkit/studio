@@ -14,5 +14,17 @@
       "agent": "studio",
       "label": "Studio agent"
     }
-  }
+  },
+  "agents": [
+    {
+      "agent": "studio",
+      "label": "Studio agent",
+      "blurb": "This repo's own agent — design-system and package work."
+    },
+    {
+      "agent": "atelier",
+      "label": "Atelier agent",
+      "blurb": "Sibling agent for cross-project dispatch."
+    }
+  ]
 }

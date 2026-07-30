@@ -168,4 +168,100 @@ describe("Studio Scout web transport", () => {
     expect(String(calls[2]?.body?.body)).toContain("Studio: Studio");
     expect(String(calls[2]?.body?.body)).toContain("Surface: Scout connection");
   });
+
+  test("routes a send to a registered target override", async () => {
+    const root = await mkdtemp(join(tmpdir(), "studio-scout-test-"));
+    temporaryRoots.push(root);
+    await mkdir(join(root, ".studio"), { recursive: true });
+    await writeFile(
+      join(root, ".studio", "project.json"),
+      `${JSON.stringify({ version: 1, id: "studio", label: "Studio", scout: config })}\n`,
+    );
+
+    const calls: Array<{ path: string; body: Record<string, unknown> | null }> = [];
+    const fetchImpl = async (input: string | URL | Request, init?: RequestInit) => {
+      const url = new URL(String(input));
+      const body = init?.body ? JSON.parse(String(init.body)) as Record<string, unknown> : null;
+      calls.push({ path: url.pathname, body });
+      if (url.pathname === "/api/agents") {
+        return Response.json([
+          {
+            id: "studio.main.arachs-mac-mini-local",
+            definitionId: "studio",
+            name: "Studio",
+            isOnline: true,
+          },
+          {
+            id: "atelier.main.arachs-mac-mini-local",
+            definitionId: "atelier",
+            name: "Atelier",
+            isOnline: true,
+          },
+        ]);
+      }
+      if (url.pathname === "/api/conversations/direct") {
+        return Response.json({ conversationId: "c.atelier" });
+      }
+      if (url.pathname === "/api/send") {
+        return Response.json({ messageId: "msg-2" });
+      }
+      return Response.json({ error: "unexpected path" }, { status: 404 });
+    };
+
+    const receipt = await postStudioScoutMessage(
+      {
+        body: "Port this component.",
+        target: { agent: "atelier", label: "Atelier agent" },
+      },
+      root,
+      fetchImpl as typeof fetch,
+    );
+
+    expect(receipt).toMatchObject({
+      ok: true,
+      intent: "message",
+      agentId: "studio.main.arachs-mac-mini-local",
+      targetAgentId: "atelier.main.arachs-mac-mini-local",
+      conversationId: "c.atelier",
+      messageId: "msg-2",
+    });
+    expect(calls.map((call) => call.path)).toEqual([
+      "/api/agents",
+      "/api/agents",
+      "/api/conversations/direct",
+      "/api/send",
+    ]);
+    expect(calls[2]?.body).toMatchObject({
+      agentId: "atelier.main.arachs-mac-mini-local",
+      targetLabel: "Atelier agent",
+    });
+  });
+
+  test("rejects a target override Scout cannot resolve", async () => {
+    const root = await mkdtemp(join(tmpdir(), "studio-scout-test-"));
+    temporaryRoots.push(root);
+    await mkdir(join(root, ".studio"), { recursive: true });
+    await writeFile(
+      join(root, ".studio", "project.json"),
+      `${JSON.stringify({ version: 1, id: "studio", scout: config })}\n`,
+    );
+
+    const fetchImpl = async () =>
+      Response.json([
+        {
+          id: "studio.main.arachs-mac-mini-local",
+          definitionId: "studio",
+          name: "Studio",
+          isOnline: true,
+        },
+      ]);
+
+    await expect(
+      postStudioScoutMessage(
+        { body: "Hello?", target: { agent: "ghost" } },
+        root,
+        fetchImpl as typeof fetch,
+      ),
+    ).rejects.toThrow("Scout agent ghost was not found.");
+  });
 });

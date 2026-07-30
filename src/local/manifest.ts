@@ -8,6 +8,7 @@ import {
   normalizeStudioId,
 } from "./ids";
 import { normalizeScoutWebBaseUrl } from "../scout/paths";
+import type { StudioAgentTarget } from "../agents/types";
 import type { StudioScoutManifestConfig } from "../scout/types";
 import type { StudioProjectManifest } from "./types";
 
@@ -103,6 +104,33 @@ function optionalScout(value: unknown): StudioScoutManifestConfig | undefined {
   };
 }
 
+function optionalAgents(value: unknown): StudioAgentTarget[] | undefined {
+  if (value === undefined) return undefined;
+  if (!Array.isArray(value)) {
+    throw new Error("agents must be an array.");
+  }
+  return value.map((entry, index) => {
+    const field = `agents[${index}]`;
+    if (!isRecord(entry)) {
+      throw new Error(`${field} must be an object.`);
+    }
+    const agent = optionalString(entry.agent, `${field}.agent`);
+    if (!agent) {
+      throw new Error(`${field}.agent is required.`);
+    }
+    const intent = optionalString(entry.intent, `${field}.intent`);
+    if (intent !== undefined && intent !== "message" && intent !== "request") {
+      throw new Error(`${field}.intent must be "message" or "request".`);
+    }
+    return {
+      agent,
+      label: optionalString(entry.label, `${field}.label`),
+      intent,
+      blurb: optionalString(entry.blurb, `${field}.blurb`),
+    };
+  });
+}
+
 export function parseStudioProjectManifest(
   value: unknown,
   source = STUDIO_PROJECT_MANIFEST_PATH,
@@ -134,6 +162,7 @@ export function parseStudioProjectManifest(
     preferredPort: optionalPort(value.preferredPort, "preferredPort"),
     env: optionalEnv(value.env),
     scout: optionalScout(value.scout),
+    agents: optionalAgents(value.agents),
   };
 }
 

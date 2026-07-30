@@ -1,3 +1,4 @@
+import type { StudioAgentTarget } from "../agents/types";
 import type { StudioScoutManifestConfig } from "../scout/types";
 
 export interface StudioProjectManifest {
@@ -12,6 +13,11 @@ export interface StudioProjectManifest {
   preferredPort?: number;
   env?: Record<string, string>;
   scout?: StudioScoutManifestConfig;
+  /**
+   * Agents this Studio may dispatch work to. Absent → consumers fall back to
+   * `[scout.identity]`, so single-agent configs keep working unchanged.
+   */
+  agents?: StudioAgentTarget[];
 }
 
 export interface EnabledStudio {

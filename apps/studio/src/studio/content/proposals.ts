@@ -9,6 +9,18 @@ export const STU_001_HUDSON_INSERTION_POINTS = `# STU-001 - Hudson insertion poi
 
 Proposal.
 
+Verified end to end on 2026-07-30: a highlight on this section produced a review
+pass that dispatched over Scout to a local agent and arrived with its section
+anchor, heading level, source URL, and studio/surface footer intact. Highlights
+persist through the sidecar route to
+\`.studio/annotations/stu-001-hudson-insertion-points.json\`, and the send path
+resolves its target from the same agent registry that backs the drawer picker.
+
+Note the shape of what was verified. The loop works because Studio rendered this
+document at a Studio route, so every annotatable region was one Studio owned.
+Annotating the real app surface is the case this proposal exists for, and it
+still needs the insertion-point contract below.
+
 ## Target
 
 Hudson Kit should own the insertion-point primitive. Studio should own the

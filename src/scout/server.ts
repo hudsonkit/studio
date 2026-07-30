@@ -1,4 +1,6 @@
 import { findStudioProjectRoot, readStudioProjectManifest } from "../local/manifest";
+import { createAgentRegistry, type AgentRegistry } from "../agents/registry";
+import type { StudioAgentTarget } from "../agents/types";
 import {
   normalizeScoutWebBaseUrl,
   scoutWebApiUrl,
@@ -33,7 +35,12 @@ interface ResolvedScoutRuntime {
   studioId: string;
   studioLabel: string;
   config: StudioScoutManifestConfig;
+  /** The Studio's own identity agent — the sender. */
   agent: StudioScoutAgentSummary;
+  /** The resolved recipient — differs from `agent` only on a target override. */
+  targetAgent: StudioScoutAgentSummary;
+  /** Display label for the recipient, from the manifest target when given. */
+  targetLabel?: string;
 }
 
 type StudioScoutEnvironment = Record<string, string | undefined>;
@@ -107,6 +114,7 @@ async function scoutJson<T>(
 export async function resolveStudioScoutAgent(
   config: StudioScoutManifestConfig,
   fetchImpl: FetchLike = fetch,
+  selectorOverride?: string,
 ): Promise<StudioScoutAgentSummary> {
   const records = await scoutJson<ScoutAgentRecord[]>(
     config.webBaseUrl,
@@ -118,7 +126,8 @@ export async function resolveStudioScoutAgent(
     throw new Error("Scout web returned an invalid agent list.");
   }
 
-  const selector = normalizeSelector(config.identity.agent);
+  const wanted = selectorOverride?.trim() ? selectorOverride : config.identity.agent;
+  const selector = normalizeSelector(wanted);
   const matches = records
     .filter((record) => {
       const candidates = [
@@ -141,10 +150,10 @@ export async function resolveStudioScoutAgent(
   if (exact) return exact;
   if (matches.length === 1) return matches[0];
   if (matches.length === 0) {
-    throw new Error(`Scout agent ${config.identity.agent} was not found.`);
+    throw new Error(`Scout agent ${wanted} was not found.`);
   }
   throw new Error(
-    `Scout agent selector ${config.identity.agent} is ambiguous (${matches
+    `Scout agent selector ${wanted} is ambiguous (${matches
       .map((agent) => agent.id)
       .join(", ")}).`,
   );
@@ -153,6 +162,7 @@ export async function resolveStudioScoutAgent(
 async function resolveRuntime(
   startDirectory: string,
   fetchImpl: FetchLike,
+  target?: StudioAgentTarget,
 ): Promise<ResolvedScoutRuntime> {
   const repo = await findStudioProjectRoot(startDirectory);
   const manifest = await readStudioProjectManifest(repo);
@@ -161,13 +171,42 @@ async function resolveRuntime(
   }
   const config = resolveStudioScoutConfig(manifest.scout);
   const agent = await resolveStudioScoutAgent(config, fetchImpl);
+  const targetAgent = target?.agent.trim()
+    ? await resolveStudioScoutAgent(config, fetchImpl, target.agent)
+    : agent;
   return {
     repo,
     studioId: manifest.id,
     studioLabel: manifest.label ?? manifest.id,
     config,
     agent,
+    targetAgent,
+    targetLabel: target?.label,
   };
+}
+
+/**
+ * The Studio's registered dispatch targets as a registry, straight from the
+ * project manifest. Falls back to `[scout.identity]` when the manifest has
+ * no `agents` list, so single-agent configs behave exactly as before.
+ */
+export async function loadStudioAgentRegistry(
+  startDirectory = process.cwd(),
+): Promise<AgentRegistry> {
+  const repo = await findStudioProjectRoot(startDirectory);
+  const manifest = await readStudioProjectManifest(repo);
+  return createAgentRegistry({
+    agents: manifest.agents?.length
+      ? manifest.agents
+      : manifest.scout
+        ? [
+            {
+              agent: manifest.scout.identity.agent,
+              label: manifest.scout.identity.label,
+            },
+          ]
+        : [],
+  });
 }
 
 export async function inspectStudioScoutConnection(
@@ -259,12 +298,16 @@ export async function postStudioScoutMessage(
   input: StudioScoutMessageInput,
   startDirectory = process.cwd(),
   fetchImpl: FetchLike = fetch,
+  targetOverride?: StudioAgentTarget,
 ): Promise<StudioScoutReceipt> {
   const body = input.body?.trim();
   if (!body) throw new Error("Message body is required.");
+  const target = targetOverride ?? input.target;
   const intent: StudioScoutMessageIntent =
-    input.intent === "request" ? "request" : "message";
-  const runtime = await resolveRuntime(startDirectory, fetchImpl);
+    input.intent === "request" || (!input.intent && target?.intent === "request")
+      ? "request"
+      : "message";
+  const runtime = await resolveRuntime(startDirectory, fetchImpl, target);
   const routedBody = formatContext(runtime, body, input.context);
 
   let payload: unknown;
@@ -277,7 +320,7 @@ export async function postStudioScoutMessage(
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           body: routedBody,
-          targetAgentId: runtime.agent.id,
+          targetAgentId: runtime.targetAgent.id,
           metadata: {
             source: "studio-web",
             studioId: runtime.studioId,
@@ -294,8 +337,8 @@ export async function postStudioScoutMessage(
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          agentId: runtime.agent.id,
-          targetLabel: runtime.config.identity.label,
+          agentId: runtime.targetAgent.id,
+          targetLabel: runtime.targetLabel ?? runtime.config.identity.label,
           projectPath: runtime.repo,
         }),
       },
@@ -335,6 +378,7 @@ export async function postStudioScoutMessage(
     ok: true,
     intent,
     agentId: runtime.agent.id,
+    targetAgentId: runtime.targetAgent.id,
     conversationId: receiptValue(payload, "conversationId"),
     messageId: receiptValue(payload, "messageId"),
     flightId: receiptValue(payload, "flightId"),

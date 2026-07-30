@@ -9,3 +9,5 @@ dist
 # OpenScout local state
 .openscout/project.json
 examples/studio-app/.studio/
+# Annotation sidecars are runtime data, not source
+.studio/annotations/

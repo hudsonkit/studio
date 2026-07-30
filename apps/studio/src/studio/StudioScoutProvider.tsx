@@ -12,8 +12,10 @@ import {
 import { ArrowUpRight, MessageSquareText, Plus, Quote, RefreshCw, Trash2, X } from "lucide-react";
 import { useStudioRouter } from "studio/router";
 import {
+  loadStudioScoutAgents,
   loadStudioScoutConnection,
   studioScoutComposerUrl,
+  type StudioScoutAgentOption,
   type StudioScoutConnection,
   type StudioScoutContextItem,
 } from "studio/scout";
@@ -26,6 +28,11 @@ type StudioScoutContextValue = {
   openScout: () => void;
   closeScout: () => void;
   refreshConnection: () => Promise<void>;
+  /** Registered dispatch targets from the manifest, resolved against Scout. */
+  agents: StudioScoutAgentOption[];
+  /** The target the drawer addresses. Null until the agents list loads. */
+  target: StudioScoutAgentOption | null;
+  selectTarget: (selector: string) => void;
 };
 
 const StudioScoutContext = createContext<StudioScoutContextValue | null>(null);
@@ -41,6 +48,8 @@ export function StudioScoutProvider({ children }: { children: ReactNode }) {
   const [pageTitle, setPageTitle] = useState("Studio");
   const [pageUrl, setPageUrl] = useState("");
   const [appliedContext, setAppliedContext] = useState<StudioScoutContextItem[]>([]);
+  const [agents, setAgents] = useState<StudioScoutAgentOption[]>([]);
+  const [targetSelector, setTargetSelector] = useState<string | null>(null);
 
   const refreshConnection = useCallback(async () => {
     setLoading(true);
@@ -63,6 +72,20 @@ export function StudioScoutProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     void refreshConnection();
   }, [refreshConnection]);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadStudioScoutAgents()
+      .then((response) => {
+        if (!cancelled) setAgents(response.agents);
+      })
+      .catch(() => {
+        if (!cancelled) setAgents([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     setPageTitle(registry.pageForPath(pathname ?? "")?.label ?? document.title ?? "Studio");
@@ -106,13 +129,22 @@ export function StudioScoutProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open]);
 
+  const target = useMemo<StudioScoutAgentOption | null>(() => {
+    if (agents.length === 0) return null;
+    return agents.find((option) => option.selector === targetSelector) ?? agents[0];
+  }, [agents, targetSelector]);
+
+  const selectTarget = useCallback((selector: string) => {
+    setTargetSelector(selector);
+  }, []);
+
   const embedUrl = useMemo(() => {
     if (!connection?.connected || !connection.webBaseUrl) return null;
     return studioScoutComposerUrl(connection.webBaseUrl, {
-      agentId: connection.identity?.agent?.id,
+      agentId: target?.agent?.id ?? connection.identity?.agent?.id,
       context: appliedContext,
     }).toString();
-  }, [appliedContext, connection]);
+  }, [appliedContext, connection, target]);
 
   const value = useMemo<StudioScoutContextValue>(() => ({
     connection,
@@ -121,7 +153,10 @@ export function StudioScoutProvider({ children }: { children: ReactNode }) {
     openScout,
     closeScout: () => setOpen(false),
     refreshConnection,
-  }), [connection, loading, open, openScout, refreshConnection]);
+    agents,
+    target,
+    selectTarget,
+  }), [agents, connection, loading, open, openScout, refreshConnection, selectTarget, target]);
 
   function addNote() {
     const note = noteDraft.trim();
@@ -151,6 +186,24 @@ export function StudioScoutProvider({ children }: { children: ReactNode }) {
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                {agents.length >= 2 && target ? (
+                  <label className="flex items-center gap-2 font-mono text-[8px] uppercase tracking-[0.14em] text-studio-ink-faint">
+                    to
+                    <select
+                      value={target.selector}
+                      onChange={(event) => selectTarget(event.target.value)}
+                      aria-label="Dispatch target agent"
+                      className="border border-studio-rule bg-studio-surface px-2 py-1.5 font-mono text-[10px] normal-case tracking-normal text-studio-ink-strong outline-none focus:border-studio-rule-strong"
+                    >
+                      {agents.map((option) => (
+                        <option key={option.selector} value={option.selector}>
+                          {option.label}
+                          {option.online === false ? " (offline)" : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
                 {connection?.webBaseUrl ? (
                   <a href={connection.webBaseUrl} target="_blank" rel="noreferrer" className="p-2 text-studio-ink-faint hover:text-studio-ink-strong" aria-label="Open Scout">
                     <ArrowUpRight size={14} />

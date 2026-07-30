@@ -6,6 +6,7 @@ export const studioScoutPaths = {
   studioApi: {
     connection: "/api/scout",
     messages: "/api/scout/messages",
+    agents: "/api/scout/agents",
   },
   scoutWebApi: {
     agents: "/api/agents",
