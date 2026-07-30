@@ -28,6 +28,7 @@ import {
   THEME_SAMPLE,
 } from "@/studio/content/codeSamples";
 import { STU_001_HUDSON_INSERTION_POINTS } from "@/studio/content/proposals";
+import { AnnotatableMarkdown } from "@/studio/AnnotatableMarkdown";
 import { StudioScoutPanel } from "@/studio/StudioScoutPanel";
 import { ScoutShellAtomsStudy } from "@/studio/studies/ScoutShellAtoms";
 import {
@@ -392,7 +393,7 @@ function MarkdownPage({ page, body }: { page: StudioAppPage; body: string }) {
     <main className="w-full px-6 py-10 lg:px-7">
       <PageHeader page={page} />
       <section className="max-w-[900px] py-8">
-        <EngMarkdown body={body} />
+        <AnnotatableMarkdown page={page} body={body} />
       </section>
     </main>
   );
