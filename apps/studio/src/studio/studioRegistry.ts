@@ -218,6 +218,40 @@ export const pages: readonly StudioAppPage[] = [
     ],
   },
   {
+    id: "talkie-atlas",
+    href: "/studio/studies/talkie-feature-atlas",
+    label: "Talkie feature atlas",
+    bucket: "studies",
+    surface: "vision",
+    status: "preview",
+    blurb:
+      "A data-driven capability app: search, filter, cross the surface matrix, inspect live receipts, and traverse every Talkie feature by user job and maturity.",
+    source: [
+      "apps/studio/src/studio/studies/TalkieFeatureAtlas.tsx",
+      "apps/studio/src/studio/studies/talkieFeatureAtlas.css",
+      "apps/studio/src/studio/studies/talkie/TalkieFeatureExplorer.tsx",
+      "apps/studio/src/studio/studies/talkie/talkieFeatureExplorer.css",
+      "apps/studio/src/studio/studies/talkie/TalkieReceipt.tsx",
+      "apps/studio/src/studio/studies/talkie/talkieReceipt.css",
+    ],
+  },
+  {
+    id: "talkie-one-thought",
+    href: "/studio/studies/talkie-one-thought",
+    label: "Talkie · One thought",
+    bucket: "studies",
+    surface: "vision",
+    status: "preview",
+    blurb:
+      "An end-to-end narrative study: catch a thought, keep its context, shape it, deliver it, and retain the trail.",
+    source: [
+      "apps/studio/src/studio/studies/TalkieOneThought.tsx",
+      "apps/studio/src/studio/studies/talkieOneThought.css",
+      "apps/studio/src/studio/studies/talkie/TalkieReceipt.tsx",
+      "apps/studio/src/studio/studies/talkie/talkieReceipt.css",
+    ],
+  },
+  {
     id: "studio-reference-target-study",
     href: "/studio/samples/targeted-study",
     label: "Targeted study sample",

@@ -31,6 +31,8 @@ import { STU_001_HUDSON_INSERTION_POINTS } from "@/studio/content/proposals";
 import { AnnotatableMarkdown } from "@/studio/AnnotatableMarkdown";
 import { StudioScoutPanel } from "@/studio/StudioScoutPanel";
 import { ScoutShellAtomsStudy } from "@/studio/studies/ScoutShellAtoms";
+import { TalkieFeatureAtlasStudy } from "@/studio/studies/TalkieFeatureAtlas";
+import { TalkieOneThoughtStudy } from "@/studio/studies/TalkieOneThought";
 import {
   HOME_HREF,
   pages,
@@ -135,6 +137,12 @@ export function renderStudioPage({ pathname, page }: RenderContext) {
   }
   if (page?.href === "/studio/studies/sco-proto-001-scout-shell-atoms") {
     return <ScoutShellAtomsStudy page={page} />;
+  }
+  if (page?.href === "/studio/studies/talkie-feature-atlas") {
+    return <TalkieFeatureAtlasStudy page={page} />;
+  }
+  if (page?.href === "/studio/studies/talkie-one-thought") {
+    return <TalkieOneThoughtStudy page={page} />;
   }
   if (page) return <ReferencePage page={page} sample={referenceSamples[page.href]} />;
   return <NotFoundPage />;

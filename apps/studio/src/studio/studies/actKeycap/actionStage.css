@@ -1,0 +1,138 @@
+/*
+ * ACT-KEYCAP — shared capture stage.
+ *
+ * A 960x540 replica of the Action capture viewport used in the reference
+ * renders (artifacts/key-caption-screenshots/*.png), so both caption
+ * treatments can be compared against the same surrounding content.
+ */
+
+.act-stage {
+  position: relative;
+  width: 960px;
+  height: 540px;
+  overflow: hidden;
+  background: #050505;
+  font-family:
+    ui-sans-serif,
+    -apple-system,
+    "SF Pro Text",
+    "Helvetica Neue",
+    system-ui,
+    sans-serif;
+  color: #f4f2ee;
+  isolation: isolate;
+}
+
+.act-stage__doc {
+  position: absolute;
+  inset: 0 111px 0 0;
+  padding: 30px 0 0;
+}
+
+.act-stage__line {
+  position: absolute;
+  left: -46px;
+  font-size: 15px;
+  line-height: 1.2;
+  letter-spacing: 0.005em;
+  color: #f2f0ec;
+  white-space: nowrap;
+}
+
+.act-stage__card {
+  position: absolute;
+  left: -20px;
+  width: 628px;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 13px;
+  background: #0a0a0a;
+}
+
+.act-stage__pill {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 37px;
+  padding: 0 15px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.015);
+  font-size: 14.5px;
+  color: #f4f2ee;
+}
+
+.act-stage__undo {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 14.5px;
+  color: #f4f2ee;
+}
+
+.act-stage__undo-rule {
+  position: absolute;
+  right: 0;
+  bottom: -6px;
+  width: 42px;
+  height: 1.5px;
+  border-radius: 1px;
+  background: #ef6a47;
+}
+
+.act-stage__diff {
+  position: absolute;
+  display: flex;
+  gap: 9px;
+  font-size: 14.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.act-stage__diff-add {
+  color: #4ec27a;
+}
+
+.act-stage__diff-del {
+  color: #e05a52;
+}
+
+/* Right sidebar --------------------------------------------------------- */
+
+.act-stage__rail {
+  position: absolute;
+  inset: 0 0 0 849px;
+  padding: 14px 0 0 36px;
+  background: #f1eee7;
+  color: #6f6c65;
+  font-size: 13.5px;
+  letter-spacing: 0.01em;
+}
+
+.act-stage__rail-item {
+  position: absolute;
+  left: 36px;
+  white-space: nowrap;
+}
+
+.act-stage__rail-eyebrow {
+  position: absolute;
+  left: 27px;
+  font-size: 11px;
+  letter-spacing: 0.19em;
+  color: #a9a69e;
+  white-space: nowrap;
+}
+
+/* Caption slot ---------------------------------------------------------- */
+
+.act-stage__caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 24px;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 3;
+}

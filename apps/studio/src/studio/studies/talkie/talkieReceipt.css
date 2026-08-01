@@ -1,0 +1,196 @@
+.talkie-receipt {
+  --receipt-accent: #169d79;
+  --receipt-accent-soft: color-mix(in srgb, var(--receipt-accent) 10%, transparent);
+  --receipt-paper: #f4f0e8;
+  --receipt-ink: #292a28;
+  --receipt-muted: #8b8a84;
+  --receipt-line: color-mix(in srgb, var(--receipt-ink) 14%, transparent);
+  position: relative;
+  overflow: hidden;
+  color: var(--receipt-ink);
+  background: var(--receipt-paper);
+  border: 1px solid color-mix(in srgb, var(--receipt-ink) 16%, transparent);
+  box-shadow: 12px 14px 0 color-mix(in srgb, var(--receipt-ink) 7%, transparent);
+}
+
+.talkie-receipt::after {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border: 1px solid color-mix(in srgb, white 30%, transparent);
+  pointer-events: none;
+  content: "";
+}
+
+.talkie-receipt[data-tone="experimental"] {
+  --receipt-accent: #d59421;
+}
+
+.talkie-receipt[data-tone="partial"] {
+  --receipt-accent: #a56c3f;
+}
+
+.talkie-receipt[data-tone="legacy"] {
+  --receipt-accent: #787974;
+}
+
+.talkie-receipt__head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  min-height: 68px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--receipt-line);
+}
+
+.talkie-receipt__signal {
+  color: #efa91a;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.talkie-receipt__identity {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.talkie-receipt__identity strong {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.talkie-receipt__identity small,
+.talkie-receipt__eyebrow {
+  color: var(--receipt-muted);
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.talkie-receipt__status {
+  padding: 6px 8px 5px;
+  color: var(--receipt-accent);
+  background: var(--receipt-accent-soft);
+  border: 1px solid color-mix(in srgb, var(--receipt-accent) 26%, transparent);
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.talkie-receipt__row {
+  display: grid;
+  grid-template-columns: minmax(108px, 0.8fr) minmax(0, 1.4fr) 16px;
+  gap: 14px;
+  align-items: center;
+  min-height: 50px;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--receipt-line);
+}
+
+.talkie-receipt__row:last-child {
+  border-bottom: 0;
+}
+
+.talkie-receipt__label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--receipt-muted);
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.talkie-receipt__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  opacity: 0.64;
+}
+
+.talkie-receipt__value {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 580;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.talkie-receipt__check {
+  color: var(--receipt-accent);
+}
+
+.talkie-receipt__row[data-state="attention"] .talkie-receipt__check {
+  opacity: 0.38;
+}
+
+.talkie-receipt__foot {
+  padding: 10px 18px;
+  color: var(--receipt-muted);
+  background: color-mix(in srgb, var(--receipt-ink) 2.5%, transparent);
+  border-top: 1px solid var(--receipt-line);
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 8px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.talkie-receipt.is-compact {
+  box-shadow: 8px 9px 0 color-mix(in srgb, var(--receipt-ink) 7%, transparent);
+}
+
+.talkie-receipt.is-compact .talkie-receipt__head {
+  min-height: 58px;
+  padding: 11px 14px;
+}
+
+.talkie-receipt.is-compact .talkie-receipt__row {
+  grid-template-columns: minmax(92px, 0.72fr) minmax(0, 1.4fr) 14px;
+  min-height: 42px;
+  padding: 8px 14px;
+}
+
+@media (max-width: 620px) {
+  .talkie-receipt__head {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .talkie-receipt__status {
+    grid-column: 2;
+    width: max-content;
+  }
+
+  .talkie-receipt__row,
+  .talkie-receipt.is-compact .talkie-receipt__row {
+    grid-template-columns: 1fr auto;
+    gap: 5px 12px;
+  }
+
+  .talkie-receipt__value {
+    grid-column: 1;
+    white-space: normal;
+  }
+
+  .talkie-receipt__check {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+}

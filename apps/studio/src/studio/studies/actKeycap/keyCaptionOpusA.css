@@ -1,0 +1,103 @@
+/*
+ * ACT-KEYCAP-OPUS-A — "Letterpress Plate"
+ *
+ * Material inversion of the shipping caption: a single paper plate divided
+ * into ruled cells, instead of a graphite slab carrying separate 3D keycaps.
+ * Nothing is extruded; hierarchy comes from paper value + type weight.
+ *
+ * Every effect here maps to a non-interactive AppKit primitive:
+ *   plate        -> NSGradient in NSBezierPath(roundedRect:) + NSShadow
+ *   cell fill    -> NSColor fill clipped to the plate path
+ *   divider      -> 1px NSBezierPath line
+ *   accent rule  -> NSBezierPath(roundedRect:) fill
+ *   glyphs       -> NSAttributedString.draw(in:)
+ */
+
+.keycap-a {
+  --a-paper: #f3ebdd;
+  --a-paper-bright: #fbf7ef;
+  --a-paper-recessed: #ebe1cf;
+  --a-ink: #0e1213;
+  --a-coral: #ef6a47;
+
+  display: flex;
+  align-items: stretch;
+  height: 44px;
+  border: 1px solid rgba(14, 18, 19, 0.16);
+  border-radius: 10px;
+  background: linear-gradient(180deg, var(--a-paper-bright) 0%, var(--a-paper) 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.5) inset,
+    0 7px 20px rgba(0, 0, 0, 0.38),
+    0 1px 2px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  font-family:
+    ui-sans-serif,
+    -apple-system,
+    "SF Pro Text",
+    "Helvetica Neue",
+    system-ui,
+    sans-serif;
+}
+
+.keycap-a__cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+/* Modifier cells sit one paper value back; the action cell keeps the sheet. */
+.keycap-a__cell--modifier {
+  width: 44px;
+  background: linear-gradient(180deg, #e9dfca 0%, #e2d6be 100%);
+  box-shadow: 0 1px 1.5px rgba(14, 18, 19, 0.06) inset;
+  color: rgba(14, 18, 19, 0.62);
+  font-size: 19px;
+  font-weight: 400;
+}
+
+.keycap-a__cell--action {
+  width: 52px;
+  background: linear-gradient(180deg, #fdfaf4 0%, #f7f1e5 100%);
+  color: var(--a-ink);
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.keycap-a__cell--solo {
+  width: 76px;
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+/* Hairline rule between cells — inset so it never touches the plate radius. */
+.keycap-a__cell + .keycap-a__cell::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 1px;
+  background: rgba(14, 18, 19, 0.14);
+}
+
+/* The action key is the only coral in the system. */
+.keycap-a__rule {
+  position: absolute;
+  left: 50%;
+  bottom: 7px;
+  height: 2.5px;
+  border-radius: 1.25px;
+  background: var(--a-coral);
+  transform: translateX(-50%);
+}
+
+.keycap-a__glyph {
+  display: block;
+  transform: translateY(-1px);
+}
