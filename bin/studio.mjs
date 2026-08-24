@@ -30,6 +30,7 @@ import {
   startHostDaemon,
   unregisterProject,
 } from './local-dev.mjs';
+import { runDoctor } from './local-doctor.mjs';
 import { hostApiRequest } from './local-host.mjs';
 
 const args = argv.slice(2);
@@ -46,11 +47,13 @@ Commands:
   studio heartbeat [--port <changed-port>] [--pid <pid>] [--ttl 30s]
   studio unregister
   studio list [--json]
+  studio doctor [--path <path>] [--json]
   studio components <list|find|show|audit|verify|port|hashes> [--json]
   studio create-view <label> [--bucket <b>] [--surface <s>]
 
 Examples:
-  studio dev --port 3060 -- next dev
+  studio dev -- next dev --port {port}     # port allocated + remembered
+  studio dev --port 3060 -- next dev       # explicit port, unchanged
   studio register --port 3060 --pid $$
   studio heartbeat --port 3061
   studio unregister
@@ -270,6 +273,10 @@ async function main() {
     else for (const registration of result.body.registrations) {
       console.log(`${registration.hostname}\t${registration.upstream.host}:${registration.upstream.port}\t${registration.workingDirectory}`);
     }
+    return;
+  }
+  if (command === 'doctor') {
+    process.exitCode = await runDoctor(args.slice(1));
     return;
   }
   if (command === 'components') {

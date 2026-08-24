@@ -22,6 +22,18 @@ export const DEFAULT_CADDY_ADMIN = "127.0.0.1:2019";
 export const DEFAULT_SWEEP_MS = 2_000;
 export const DEFAULT_HEARTBEAT_TTL_MS = 15_000;
 
+/**
+ * A hostname and path Studio routes to itself. Installing a route is not the
+ * same as being in the traffic path: when a second proxy shares the public port
+ * (Caddy sets SO_REUSEPORT, so several processes can bind :80 and only one
+ * receives connections), routes can be accepted by an admin API that belongs to
+ * a process no request ever reaches. Asking for this nonce back through the
+ * public port is the only answer that proves the edge is really ours.
+ */
+export const EDGE_PROBE_HOSTNAME = "studio-edge-probe.studio.local";
+export const EDGE_PROBE_PATH = "/__studio/host-probe";
+const EDGE_VERIFY_INTERVAL_MS = 30_000;
+
 const MAX_BODY_BYTES = 64 * 1024;
 
 function delay(ms) {
@@ -82,6 +94,7 @@ export function studioHostPaths(environment = process.env) {
     lock: join(root, "host.lock"),
     state: join(root, "registrations.json"),
     discovery: join(root, "discovery-processes.json"),
+    devPorts: join(root, "dev-ports.json"),
     log: join(root, "studio-host.log"),
     leases: join(root, "leases"),
   };
@@ -280,6 +293,35 @@ function caddyRequest(adminAddress, path, { method = "GET", body } = {}) {
   });
 }
 
+function probeEdgeNonce(publicPort, hostname = EDGE_PROBE_HOSTNAME, path = EDGE_PROBE_PATH) {
+  return new Promise((resolveProbe) => {
+    const settle = (value) => resolveProbe(value);
+    const probe = httpRequest({
+      host: "127.0.0.1",
+      port: publicPort,
+      path,
+      method: "GET",
+      headers: { host: hostname },
+    }, (response) => {
+      const chunks = [];
+      response.on("data", (chunk) => chunks.push(chunk));
+      response.on("end", () => {
+        const body = Buffer.concat(chunks).toString("utf8");
+        let nonce;
+        try {
+          nonce = JSON.parse(body).nonce;
+        } catch {
+          nonce = undefined;
+        }
+        settle({ ok: true, status: response.statusCode || 0, bytes: body.length, nonce });
+      });
+    });
+    probe.setTimeout(2_000, () => probe.destroy(new Error("timed out")));
+    probe.once("error", (error) => settle({ ok: false, error: error.message }));
+    probe.end();
+  });
+}
+
 function listensOnPort(listenAddresses, port) {
   return Array.isArray(listenAddresses)
     && listenAddresses.some((address) => typeof address === "string" && address.endsWith(`:${port}`));
@@ -454,6 +496,9 @@ export class StudioHost {
     this.registrations = new Map();
     this.mdns = new Map();
     this.edge = null;
+    this.edgeNonce = randomUUID();
+    this.edgeVerification = null;
+    this.edgeVerifiedAt = 0;
     this.proxyPort = null;
     this.publicPort = null;
     this.startedAt = new Date().toISOString();
@@ -576,6 +621,15 @@ export class StudioHost {
   }
 
   handleProxyRequest(request, response) {
+    if (request.url === EDGE_PROBE_PATH) {
+      responseJson(response, 200, {
+        ok: true,
+        probe: "studio-host",
+        pid: process.pid,
+        nonce: this.edgeNonce,
+      });
+      return;
+    }
     const registration = this.findRegistrationForRequest(request);
     if (!registration) {
       respondProxyError(response, 404, "No Studio project is registered for this hostname.");
@@ -694,10 +748,12 @@ export class StudioHost {
       await this.cleanupOrphanedDiscovery();
       await this.startProxy();
       await this.reconcile({ replaceEdgeRoutes: true });
+      await this.verifyEdge({ force: true }).catch(() => {});
       await this.startControlServer();
       this.timer = setInterval(() => {
         this.reconcilePromise = this.reconcilePromise
           .then(() => this.reconcile())
+          .then(() => this.verifyEdge())
           .catch((error) => this.log(`reconcile failed: ${error.message}`));
       }, this.sweepMs);
       return this;
@@ -779,7 +835,10 @@ export class StudioHost {
       if (!desiredHostnames.has(hostname)) this.stopMdns(hostname);
     }
     if (this.edge) {
-      await this.edge.reconcile(desiredHostnames, replaceEdgeRoutes);
+      await this.edge.reconcile(
+        new Set([...desiredHostnames, EDGE_PROBE_HOSTNAME]),
+        replaceEdgeRoutes,
+      );
     }
     return { removed };
   }
@@ -856,6 +915,40 @@ export class StudioHost {
     return current;
   }
 
+  /**
+   * Confirms that requests to the public port actually reach this process.
+   * A failure here is the difference between "the route was accepted" and "the
+   * hostname works", which is precisely the gap that let a registered project
+   * serve an empty 200 while every status surface reported it healthy.
+   */
+  async verifyEdge({ force = false } = {}) {
+    if (!this.edge) {
+      this.edgeVerification = {
+        ok: true,
+        checkedAt: new Date().toISOString(),
+        detail: `Studio owns port ${this.publicPort} directly.`,
+      };
+      return this.edgeVerification;
+    }
+    if (!force && Date.now() - this.edgeVerifiedAt < EDGE_VERIFY_INTERVAL_MS) {
+      return this.edgeVerification;
+    }
+    this.edgeVerifiedAt = Date.now();
+    const result = await probeEdgeNonce(this.publicPort);
+    const ok = Boolean(result.ok && result.nonce === this.edgeNonce);
+    const detail = ok
+      ? `Requests to port ${this.publicPort} reach this host.`
+      : result.ok
+        ? `Port ${this.publicPort} answered ${result.status} with ${result.bytes} bytes from another`
+          + ` process. Studio installed its routes into the Caddy admin at ${this.caddyAdmin},`
+          + " but that is not the process serving this port, so every registered hostname is dark."
+        : `Port ${this.publicPort} did not answer (${result.error}).`;
+    const changed = this.edgeVerification?.ok !== ok;
+    this.edgeVerification = { ok, checkedAt: new Date().toISOString(), detail };
+    if (changed) this.log(ok ? "edge verified" : `EDGE UNVERIFIED: ${detail}`);
+    return this.edgeVerification;
+  }
+
   status() {
     return {
       ok: true,
@@ -865,6 +958,8 @@ export class StudioHost {
       edge: this.edge ? "shared-caddy" : "direct",
       proxyPort: this.proxyPort,
       publicPort: this.publicPort,
+      edgeVerified: this.edgeVerification ? this.edgeVerification.ok : null,
+      edgeVerification: this.edgeVerification,
       registrationCount: this.registrations.size,
     };
   }
