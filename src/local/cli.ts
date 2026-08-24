@@ -3,6 +3,7 @@ import { spawn, type ChildProcess } from "node:child_process";
 import { resolve } from "node:path";
 
 import {
+  previewRoutesForStudios,
   registryToCaddyfileConfig,
   renderStudioLocalCaddyfile,
   writeStudioLocalCaddyfile,
@@ -22,6 +23,7 @@ import {
 import { ensureStudioLocalForProject } from "./installer";
 import { resolveStudioSupportPaths } from "./paths";
 import { startStudioLocalServer } from "./server";
+import { registerWithSharedStudioHost } from "./shared-host";
 import {
   STUDIO_LOCAL_DEFAULT_SUPERVISOR_PORT,
   STUDIO_LOCAL_PORTAL_HOST,
@@ -234,11 +236,13 @@ async function commandList(): Promise<void> {
 async function commandCaddyfile(args: ParsedArgs): Promise<void> {
   const paths = resolveStudioSupportPaths();
   const registry = await readStudioMachineRegistry(paths);
+  const studios = await listResolvedStudios(paths);
   const supervisorPort =
     flagNumber(args.flags, "port") ?? STUDIO_LOCAL_DEFAULT_SUPERVISOR_PORT;
   const scheme = flagScheme(args.flags);
   const config = {
     ...registryToCaddyfileConfig(registry, supervisorPort),
+    previews: previewRoutesForStudios(studios),
     scheme,
   };
   const caddyfile = renderStudioLocalCaddyfile(config);
@@ -307,16 +311,23 @@ function spawnMdnsProxy(input: {
 async function commandEdge(args: ParsedArgs): Promise<void> {
   const paths = resolveStudioSupportPaths();
   const registry = await readStudioMachineRegistry(paths);
+  const studios = await listResolvedStudios(paths);
   const port = flagNumber(args.flags, "port") ?? STUDIO_LOCAL_DEFAULT_SUPERVISOR_PORT;
   const scheme = flagScheme(args.flags);
   const caddyBin = flagString(args.flags, "caddy-bin") ?? process.env.STUDIO_LOCAL_CADDY_BIN ?? "caddy";
   const config = {
     ...registryToCaddyfileConfig(registry, port),
+    previews: previewRoutesForStudios(studios),
     scheme,
   };
   await writeStudioLocalCaddyfile(paths, config);
+  const sharedHost = scheme === "http"
+    ? await registerWithSharedStudioHost(studios, port)
+    : null;
   const server = startStudioLocalServer({ port, paths });
-  const caddy = spawnCaddy({ caddyBin, caddyfilePath: paths.caddyfilePath });
+  const caddy = sharedHost
+    ? null
+    : spawnCaddy({ caddyBin, caddyfilePath: paths.caddyfilePath });
   const mdns = schemesFor(scheme)
     .flatMap((currentScheme) => {
       const edgePort = currentScheme === "https" ? 443 : 80;
@@ -327,7 +338,7 @@ async function commandEdge(args: ParsedArgs): Promise<void> {
           port: edgePort,
           scheme: currentScheme,
         }),
-        ...registry.studios
+        ...(sharedHost ? [] : registry.studios
           .filter((studio) => studio.enabled)
           .map((studio) =>
             spawnMdnsProxy({
@@ -336,32 +347,59 @@ async function commandEdge(args: ParsedArgs): Promise<void> {
               port: edgePort,
               scheme: currentScheme,
             }),
-          ),
+          )),
+        ...(sharedHost ? [] : studios
+          .filter((studio) => studio.enabled)
+          .flatMap((studio) =>
+            studio.previews.map((preview) =>
+              spawnMdnsProxy({
+                name: `Studio ${preview.id} ${currentScheme.toUpperCase()}`,
+                host: preview.host,
+                port: edgePort,
+                scheme: currentScheme,
+              }),
+            ),
+          )),
       ];
     })
     .filter((child): child is ChildProcess => Boolean(child));
   console.log(`studio.local -> supervisor http://127.0.0.1:${server.port}`);
-  console.log(`caddyfile: ${paths.caddyfilePath}`);
+  if (sharedHost) {
+    console.log(
+      `shared Studio host: ${sharedHost.routes.map((route) => route.host).join(", ")}`,
+    );
+  } else {
+    console.log(`caddyfile: ${paths.caddyfilePath}`);
+  }
 
   await new Promise<void>((resolvePromise, reject) => {
-    const stop = () => {
+    let stopping = false;
+    const cleanup = async () => {
       for (const child of mdns) child.kill("SIGTERM");
-      caddy.kill("SIGTERM");
+      if (caddy?.exitCode === null) caddy.kill("SIGTERM");
       server.stop();
+      await sharedHost?.close();
+    };
+    const stop = async () => {
+      if (stopping) return;
+      stopping = true;
+      await cleanup();
       resolvePromise();
     };
-    process.once("SIGINT", stop);
-    process.once("SIGTERM", stop);
-    caddy.once("error", reject);
-    caddy.once("exit", (code) => {
-      for (const child of mdns) child.kill("SIGTERM");
-      server.stop();
-      if (code === 0 || code === null) {
-        resolvePromise();
-      } else {
-        reject(new Error(`caddy exited with code ${code}`));
-      }
-    });
+    const stopFromSignal = () => void stop().catch(reject);
+    process.once("SIGINT", stopFromSignal);
+    process.once("SIGTERM", stopFromSignal);
+    if (caddy) {
+      caddy.once("error", reject);
+      caddy.once("exit", (code) => {
+        if (stopping) return;
+        stopping = true;
+        void cleanup().then(() => {
+          if (code === 0 || code === null) resolvePromise();
+          else reject(new Error(`caddy exited with code ${code}`));
+        }, reject);
+      });
+    }
   });
 }
 

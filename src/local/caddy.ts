@@ -15,6 +15,7 @@ export interface StudioLocalCaddyfileConfig {
   portalHost?: string;
   scheme?: StudioLocalEdgeScheme;
   studios: ReadonlyArray<Pick<ResolvedStudio, "id" | "host" | "port" | "enabled">>;
+  previews?: ReadonlyArray<Pick<ResolvedStudio, "id" | "port" | "enabled"> & { host: string }>;
 }
 
 function formatCaddyHost(host: string): string {
@@ -83,6 +84,7 @@ export function renderStudioLocalCaddyfile(
   const portalHost = config.portalHost ?? STUDIO_LOCAL_PORTAL_HOST;
   const schemes = schemesFor(config.scheme ?? "http");
   const enabledStudios = config.studios.filter((studio) => studio.enabled);
+  const enabledPreviews = (config.previews ?? []).filter((preview) => preview.enabled);
   const blocks = schemes.flatMap((scheme) => [
     renderPortalBlock({ portalHost, supervisorPort, scheme }),
     ...enabledStudios.map((studio) =>
@@ -94,8 +96,30 @@ export function renderStudioLocalCaddyfile(
         scheme,
       }),
     ),
+    ...enabledPreviews.map((preview) =>
+      renderProxyBlock({
+        id: preview.id,
+        host: preview.host,
+        port: preview.port,
+        supervisorPort,
+        scheme,
+      }),
+    ),
   ]);
   return `${blocks.join("\n\n")}\n`;
+}
+
+export function previewRoutesForStudios(
+  studios: ReadonlyArray<ResolvedStudio>,
+): NonNullable<StudioLocalCaddyfileConfig["previews"]> {
+  return studios.flatMap((studio) =>
+    studio.previews.map((preview) => ({
+      id: studio.id,
+      host: preview.host,
+      port: studio.port,
+      enabled: studio.enabled,
+    })),
+  );
 }
 
 export function registryToCaddyfileConfig(

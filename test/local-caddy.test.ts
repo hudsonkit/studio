@@ -29,7 +29,17 @@ describe("studio local Caddyfile", () => {
     };
 
     const caddyfile = renderStudioLocalCaddyfile(
-      registryToCaddyfileConfig(registry, 43180),
+      {
+        ...registryToCaddyfileConfig(registry, 43180),
+        previews: [
+          {
+            id: "studio",
+            host: "action.studio.local",
+            port: 5191,
+            enabled: true,
+          },
+        ],
+      },
     );
 
     expect(caddyfile).toContain("http://studio.local {");
@@ -39,6 +49,8 @@ describe("studio local Caddyfile", () => {
     expect(caddyfile).toContain("rewrite * /api/studios/studio/start");
     expect(caddyfile).toContain("reverse_proxy 127.0.0.1:5191");
     expect(caddyfile).toContain("rewrite * /__studio/fallback/studio");
+    expect(caddyfile).toContain("http://action.studio.local {");
+    expect(caddyfile.match(/reverse_proxy 127\.0\.0\.1:5191/g)).toHaveLength(2);
     expect(caddyfile).not.toContain("disabled.studio.local");
   });
 
