@@ -5,6 +5,7 @@ import { createServer, request } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
+  EDGE_CATCH_ALL,
   hostApiRequest,
   renderSharedStudioRoute,
   startStudioHost,
@@ -87,6 +88,13 @@ function getViaProxy(port, hostname, path = "/") {
 }
 
 describe("Studio host registration API", () => {
+  test("registers the bare portal hostname", async () => {
+    const values = await fixture();
+    const response = await register(values, { hostname: "studio.local" });
+    expect(response.body.registration.hostname).toBe("studio.local");
+    expect(response.body.url).toContain("studio.local");
+  });
+
   test("idempotently registers and updates a repository route", async () => {
     const values = await fixture();
     const first = await register(values);
@@ -165,6 +173,14 @@ describe("Studio host registration API", () => {
 });
 
 describe("Studio host reconciliation and proxy", () => {
+  test("returns a diagnostic body naming an unmatched host", async () => {
+    const values = await fixture();
+    const response = await getViaProxy(values.host.proxyPort, "missing.studio.local");
+    expect(response.status).toBe(404);
+    expect(response.body).toContain("missing.studio.local");
+    expect(Buffer.byteLength(response.body)).toBeGreaterThan(0);
+  });
+
   test("proxies requests by canonical Host header", async () => {
     const upstream = createServer((request, response) => {
       response.setHeader("x-upstream-host", request.headers.host);
@@ -245,6 +261,18 @@ test("renders the shared port-80 edge route to the persistent proxy", () => {
       host: ["sample-repo.studio.local"],
       remote_ip: { ranges: ["127.0.0.0/8", "::1/128"] },
     }],
+    handle: [{
+      handler: "reverse_proxy",
+      upstreams: [{ dial: "127.0.0.1:43150" }],
+    }],
+    terminal: true,
+  });
+});
+
+test("renders a terminal diagnostic catch-all for unmatched local hosts", () => {
+  expect(renderSharedStudioRoute(EDGE_CATCH_ALL, 43_150)).toEqual({
+    "@id": "studio_host_unmatched_local",
+    match: [{ remote_ip: { ranges: ["127.0.0.0/8", "::1/128"] } }],
     handle: [{
       handler: "reverse_proxy",
       upstreams: [{ dial: "127.0.0.1:43150" }],

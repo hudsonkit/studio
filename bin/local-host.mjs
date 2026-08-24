@@ -32,6 +32,7 @@ export const DEFAULT_HEARTBEAT_TTL_MS = 15_000;
  */
 export const EDGE_PROBE_HOSTNAME = "studio-edge-probe.studio.local";
 export const EDGE_PROBE_PATH = "/__studio/host-probe";
+export const EDGE_CATCH_ALL = "*";
 const EDGE_VERIFY_INTERVAL_MS = 30_000;
 
 const MAX_BODY_BYTES = 64 * 1024;
@@ -198,9 +199,14 @@ function normalizeRegistrationInput(id, input) {
     throw new HostApiError(400, "A registration needs process metadata, a heartbeat TTL, or both.");
   }
 
+  const hostname = input?.hostname || hostnameForRepo(repoName);
+  if (hostname !== hostnameForRepo(repoName) && hostname !== "studio.local") {
+    throw new HostApiError(400, "hostname must match repo.name or be studio.local.");
+  }
+
   return {
     id,
-    hostname: hostnameForRepo(repoName),
+    hostname,
     repo: { name: repoName, root: resolve(repoRoot) },
     workingDirectory: resolve(workingDirectory),
     upstream: { host: upstreamHost, port: upstreamPort },
@@ -322,6 +328,15 @@ function probeEdgeNonce(publicPort, hostname = EDGE_PROBE_HOSTNAME, path = EDGE_
   });
 }
 
+async function requireDataPlaneBody(publicPort, hostname, path = "/__studio/status") {
+  const result = await probeEdgeNonce(publicPort, hostname, path);
+  if (!result.ok || result.bytes === 0) {
+    const detail = result.ok ? `${result.status} with zero bytes` : result.error;
+    throw new Error(`Shared Caddy route for ${hostname} failed data-plane verification: ${detail}.`);
+  }
+  return result;
+}
+
 function listensOnPort(listenAddresses, port) {
   return Array.isArray(listenAddresses)
     && listenAddresses.some((address) => typeof address === "string" && address.endsWith(`:${port}`));
@@ -341,16 +356,20 @@ async function discoverSharedCaddy(adminAddress) {
 }
 
 export function sharedStudioRouteId(hostname) {
+  if (hostname === EDGE_CATCH_ALL) return "studio_host_unmatched_local";
   return `studio_host_${hostname.replace(/[^a-z0-9]+/g, "_")}`;
 }
 
 export function renderSharedStudioRoute(hostname, proxyPort) {
-  return {
-    "@id": sharedStudioRouteId(hostname),
-    match: [{
+  const match = hostname === EDGE_CATCH_ALL
+    ? [{ remote_ip: { ranges: ["127.0.0.0/8", "::1/128"] } }]
+    : [{
       host: [hostname],
       remote_ip: { ranges: ["127.0.0.0/8", "::1/128"] },
-    }],
+    }];
+  return {
+    "@id": sharedStudioRouteId(hostname),
+    match,
     handle: [{
       handler: "reverse_proxy",
       upstreams: [{ dial: `127.0.0.1:${proxyPort}` }],
@@ -632,7 +651,8 @@ export class StudioHost {
     }
     const registration = this.findRegistrationForRequest(request);
     if (!registration) {
-      respondProxyError(response, 404, "No Studio project is registered for this hostname.");
+      const hostname = hostHeaderName(request.headers.host) || "(missing Host header)";
+      respondProxyError(response, 404, `No Studio route matched host ${hostname}.`);
       return;
     }
     const upstreamRequest = httpRequest({
@@ -836,7 +856,7 @@ export class StudioHost {
     }
     if (this.edge) {
       await this.edge.reconcile(
-        new Set([...desiredHostnames, EDGE_PROBE_HOSTNAME]),
+        new Set([...desiredHostnames, EDGE_PROBE_HOSTNAME, EDGE_CATCH_ALL]),
         replaceEdgeRoutes,
       );
     }
@@ -880,6 +900,14 @@ export class StudioHost {
     await this.saveState();
     this.spawnMdns(registration);
     if (this.edge) await this.edge.ensure(registration.hostname);
+    if (this.edge) {
+      try {
+        await requireDataPlaneBody(this.publicPort, registration.hostname);
+      } catch (error) {
+        this.log(`ROUTE UNVERIFIED: ${error.message}`);
+        throw new HostApiError(502, error.message);
+      }
+    }
     return { created: !current, registration, leaseId };
   }
 
