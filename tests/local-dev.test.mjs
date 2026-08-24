@@ -10,6 +10,7 @@ import {
   repoNameFromRemote,
   resolveRepoName,
   resolveRepoRoot,
+  substitutePortToken,
 } from "../bin/local-dev.mjs";
 
 describe("local Studio hostname", () => {
@@ -53,6 +54,24 @@ describe("studio dev arguments", () => {
 
   test("does not interpret unrelated child flags as a Next.js port", () => {
     expect(inferPortFromCommand(["bun", "run", "custom-dev", "-p", "preview"])).toBeUndefined();
+  });
+
+  test("leaves the port unset when the child command uses the {port} token", () => {
+    expect(parseDevArgs(["--", "next", "dev", "--port", "{port}"])).toEqual({
+      command: ["next", "dev", "--port", "{port}"],
+      help: false,
+      port: undefined,
+    });
+    expect(parseDevArgs(["--", "next", "dev", "--port={port}"]).port).toBeUndefined();
+    expect(inferPortFromCommand(["next", "dev", "-p", "{PORT}"])).toBeUndefined();
+  });
+
+  test("substitutes the token with an explicit wrapper port when both are given", () => {
+    const parsed = parseDevArgs(["--port", "3060", "--", "next", "dev", "--port", "{port}"]);
+    expect(parsed.port).toBe(3060);
+    expect(substitutePortToken(parsed.command, parsed.port)).toEqual([
+      "next", "dev", "--port", "3060",
+    ]);
   });
 
   test("rejects conflicting wrapper and child ports", () => {

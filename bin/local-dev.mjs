@@ -2,7 +2,6 @@ import { createHash } from "node:crypto";
 import { spawn, spawnSync } from "node:child_process";
 import { closeSync, mkdirSync, openSync } from "node:fs";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import { createServer } from "node:net";
 import { basename, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -17,23 +16,48 @@ import {
   studioHostPaths,
   waitForStudioHost,
 } from "./local-host.mjs";
+import {
+  allocateDevPort,
+  isPortAvailable,
+  isPortToken,
+  pathWithLocalBins,
+  rememberDevPort,
+  STUDIO_DEV_PORT_RANGE,
+  STUDIO_DEV_PORT_TOKEN,
+  substitutePortToken,
+} from "./local-ports.mjs";
 
 const DEFAULT_PORT = 3_000;
+/**
+ * A child that dies this fast, on a port something else now holds, lost an
+ * allocation race rather than failing on its own merits.
+ */
+const PORT_CONFLICT_WINDOW_MS = 15_000;
+const PORT_CONFLICT_ATTEMPTS = 4;
 const DEFAULT_EDGE_PORT = 43_150;
 const ADMIN_ADDRESS = "127.0.0.1:20219";
 const STUDIO_BIN = fileURLToPath(new URL("./studio.mjs", import.meta.url));
 
 export { formatLocalUrl, hostnameForRepo, normalizeRepoName };
+export { STUDIO_DEV_PORT_RANGE, STUDIO_DEV_PORT_TOKEN, substitutePortToken };
 
+/**
+ * A literal port written into the child command is still an explicit choice and
+ * wins. `{port}` is a placeholder, not a port, so it defers to the allocator.
+ */
 export function inferPortFromCommand(command) {
   const nextIndex = command.findIndex((arg) => /(^|\/)next$/.test(arg));
   if (nextIndex === -1) return undefined;
   for (let index = nextIndex + 1; index < command.length; index += 1) {
     const arg = command[index];
     if ((arg === "--port" || arg === "-p") && command[index + 1]) {
+      if (isPortToken(command[index + 1])) return undefined;
       return readPort(command[index + 1], arg);
     }
-    if (arg.startsWith("--port=")) return readPort(arg.slice(7), "--port");
+    if (arg.startsWith("--port=")) {
+      if (isPortToken(arg.slice(7))) return undefined;
+      return readPort(arg.slice(7), "--port");
+    }
   }
   return undefined;
 }
@@ -50,9 +74,11 @@ export function parseDevArgs(args) {
     if (arg === "--help" || arg === "-h") help = true;
     else if (arg === "--port" || arg === "-p") {
       if (!optionArgs[index + 1]) throw new Error(`${arg} requires a value.`);
-      port = readPort(optionArgs[++index], arg);
-    } else if (arg.startsWith("--port=")) port = readPort(arg.slice(7), "--port");
-    else throw new Error(`Unknown studio dev option: ${arg}`);
+      const value = optionArgs[++index];
+      if (!isPortToken(value)) port = readPort(value, arg);
+    } else if (arg.startsWith("--port=")) {
+      if (!isPortToken(arg.slice(7))) port = readPort(arg.slice(7), "--port");
+    } else throw new Error(`Unknown studio dev option: ${arg}`);
   }
 
   const commandPort = inferPortFromCommand(command);
@@ -84,18 +110,9 @@ export function resolveRepoName(repoRoot, gitBin = "git") {
   return remoteName || basename(repoRoot);
 }
 
-function canListen(port) {
-  return new Promise((resolveListen) => {
-    const server = createServer();
-    server.unref();
-    server.once("error", () => resolveListen(false));
-    server.listen({ host: "127.0.0.1", port }, () => server.close(() => resolveListen(true)));
-  });
-}
-
 export async function findAvailablePort(preferredPort = DEFAULT_PORT) {
   for (let port = preferredPort; port <= 65_535; port += 1) {
-    if (await canListen(port)) return port;
+    if (await isPortAvailable(port)) return port;
   }
   throw new Error(`No available port found at or above ${preferredPort}.`);
 }
@@ -341,39 +358,63 @@ Usage:
   studio dev [--port <port>] [-- <command>]
 
 Examples:
-  studio dev --port 3060 -- next dev
+  studio dev -- next dev --port {port}
   studio dev -- bun run custom-dev
+  studio dev --port 3060 -- next dev
+
+With no --port, studio dev allocates one: the port this project used last time
+if it is still free, otherwise a free port from ${STUDIO_DEV_PORT_RANGE.start}-${STUDIO_DEV_PORT_RANGE.end} derived from the
+repository name. The choice is remembered under the Studio host directory so
+the loopback URL stays stable across restarts. Nothing in a project needs to
+hardcode a port, and two projects can no longer collide on one.
+
+The allocated port reaches the child two ways: the literal ${STUDIO_DEV_PORT_TOKEN} token is
+substituted anywhere it appears in the command, and PORT is set in its
+environment (Next.js honours it). A port you write yourself is never rewritten.
 
 The persistent Studio host is started automatically. This wrapper registers the
 child upstream, refreshes its lease, forwards SIGINT/SIGTERM to that child only,
-and unregisters when it exits. The selected upstream port is passed through PORT.`;
+and unregisters on exit, including Ctrl-C, so no stale route is left behind.`;
 }
 
-export async function runLocalDev(args, options = {}) {
-  const { command, help, port: requestedPort } = parseDevArgs(args);
-  if (help) {
-    console.log(devHelp());
-    return 0;
+/**
+ * Ports other registered projects are already using. Advisory: it prevents
+ * handing out a port that belongs to a studio which is merely idle between
+ * restarts, which the bind check alone cannot see.
+ */
+async function registeredPorts(id, paths) {
+  try {
+    const listed = await hostApiRequest("/v1/registrations", { paths, timeoutMs: 1_000 });
+    return new Set(
+      (listed.body?.registrations || [])
+        .filter((registration) => registration.id !== id)
+        .map((registration) => registration.upstream?.port)
+        .filter((port) => Number.isInteger(port)),
+    );
+  } catch {
+    return new Set();
   }
-  const cwd = options.cwd || process.cwd();
-  const repoRoot = resolveRepoRoot(cwd);
-  const repoName = resolveRepoName(repoRoot);
-  const id = normalizeRepoName(repoName);
-  const port = requestedPort ?? await findAvailablePort();
-  const childCommand = command.length > 0 ? command : ["bunx", "--bun", "next", "dev"];
-  const paths = options.paths || studioHostPaths(options.environment);
-  await ensureStudioHost({ ...options, paths });
+}
+
+/**
+ * One registration + child process lifetime. Returns the exit code alongside
+ * how long the child survived, which is what lets the caller tell a lost port
+ * race apart from a child that failed on its own.
+ */
+async function runDevAttempt({ id, repoName, repoRoot, cwd, port, childCommand, paths, options }) {
+  const context = { id, repoName, repoRoot, workingDirectory: resolve(cwd) };
+  const describe = (leaseId) => registrationBody(context, {
+    port,
+    pid: process.pid,
+    ttlMs: DEFAULT_HEARTBEAT_TTL_MS,
+    clientName: "studio-dev",
+    command: childCommand.join(" "),
+  }, leaseId);
 
   const registration = await hostApiRequest(`/v1/registrations/${id}`, {
     paths,
     method: "PUT",
-    body: registrationBody({ id, repoName, repoRoot, workingDirectory: resolve(cwd) }, {
-      port,
-      pid: process.pid,
-      ttlMs: DEFAULT_HEARTBEAT_TTL_MS,
-      clientName: "studio-dev",
-      command: childCommand.join(" "),
-    }),
+    body: describe(),
   });
   let leaseId = registration.body.leaseId;
   console.log(`Studio: ${registration.body.url} → http://127.0.0.1:${port}`);
@@ -381,10 +422,16 @@ export async function runLocalDev(args, options = {}) {
   let child;
   let heartbeat;
   let maintenance = Promise.resolve();
+  const startedAt = Date.now();
   try {
     child = spawn(childCommand[0], childCommand.slice(1), {
       cwd,
-      env: { ...process.env, PORT: String(port), STUDIO_URL: registration.body.url },
+      env: {
+        ...process.env,
+        PATH: pathWithLocalBins(cwd),
+        PORT: String(port),
+        STUDIO_URL: registration.body.url,
+      },
       stdio: "inherit",
     });
     heartbeat = setInterval(() => {
@@ -401,26 +448,25 @@ export async function runLocalDev(args, options = {}) {
           const restored = await hostApiRequest(`/v1/registrations/${id}`, {
             paths,
             method: "PUT",
-            body: registrationBody({ id, repoName, repoRoot, workingDirectory: resolve(cwd) }, {
-              port,
-              pid: process.pid,
-              ttlMs: DEFAULT_HEARTBEAT_TTL_MS,
-              clientName: "studio-dev",
-              command: childCommand.join(" "),
-            }, leaseId),
+            body: describe(leaseId),
           });
           leaseId = restored.body.leaseId;
         }
       }).catch(() => {});
     }, Math.floor(DEFAULT_HEARTBEAT_TTL_MS / 3));
 
+    // `on`, not `once`: a second Ctrl-C must reach a child that ignored the
+    // first one rather than killing this wrapper before it can unregister.
+    let signals = 0;
     const forward = (signal) => () => {
-      if (child && child.exitCode === null && !child.killed) child.kill(signal);
+      signals += 1;
+      if (!child || child.exitCode !== null || child.signalCode !== null) return;
+      child.kill(signals >= 3 ? "SIGKILL" : signal);
     };
     const interrupt = forward("SIGINT");
     const terminate = forward("SIGTERM");
-    process.once("SIGINT", interrupt);
-    process.once("SIGTERM", terminate);
+    process.on("SIGINT", interrupt);
+    process.on("SIGTERM", terminate);
     let result;
     try {
       result = await new Promise((resolveChild, rejectChild) => {
@@ -431,8 +477,9 @@ export async function runLocalDev(args, options = {}) {
       process.removeListener("SIGINT", interrupt);
       process.removeListener("SIGTERM", terminate);
     }
-    if (result.signal) return 128 + (result.signal === "SIGINT" ? 2 : 15);
-    return result.code ?? 1;
+    const ranForMs = Date.now() - startedAt;
+    if (result.signal) return { code: 128 + (result.signal === "SIGINT" ? 2 : 15), ranForMs, signal: result.signal };
+    return { code: result.code ?? 1, ranForMs, signal: null };
   } finally {
     clearInterval(heartbeat);
     await maintenance.catch(() => {});
@@ -442,6 +489,59 @@ export async function runLocalDev(args, options = {}) {
       body: { leaseId },
       timeoutMs: 1_000,
     }).catch(() => {});
+  }
+}
+
+export async function runLocalDev(args, options = {}) {
+  const { command, help, port: requestedPort } = parseDevArgs(args);
+  if (help) {
+    console.log(devHelp());
+    return 0;
+  }
+  const cwd = options.cwd || process.cwd();
+  const repoRoot = resolveRepoRoot(cwd);
+  const repoName = resolveRepoName(repoRoot);
+  const id = normalizeRepoName(repoName);
+  const baseCommand = command.length > 0 ? command : ["bunx", "--bun", "next", "dev"];
+  const paths = options.paths || studioHostPaths(options.environment);
+  await ensureStudioHost({ ...options, paths });
+
+  const attempts = requestedPort ? 1 : PORT_CONFLICT_ATTEMPTS;
+  const exclude = new Set();
+  for (let attempt = 1; ; attempt += 1) {
+    let port = requestedPort;
+    if (!port) {
+      const allocation = await allocateDevPort({
+        id,
+        repoRoot,
+        workingDirectory: resolve(cwd),
+        paths,
+        taken: await registeredPorts(id, paths),
+        exclude,
+      });
+      port = allocation.port;
+      // Written now rather than on clean exit: the preference is re-verified on
+      // every run, so a stale entry costs one skipped candidate, while a
+      // SIGKILLed run would otherwise forget the port it had been using.
+      await rememberDevPort({ id, repoRoot, port, paths }).catch(() => {});
+    }
+
+    const childCommand = substitutePortToken(baseCommand, port);
+    const result = await runDevAttempt({
+      id, repoName, repoRoot, cwd, port, childCommand, paths, options,
+    });
+
+    const lostRace = !requestedPort
+      && result.code !== 0
+      && !result.signal
+      && result.ranForMs < PORT_CONFLICT_WINDOW_MS
+      && !(await isPortAvailable(port));
+    if (lostRace && attempt < attempts) {
+      console.error(`Studio: port ${port} was taken by another process; reallocating.`);
+      exclude.add(port);
+      continue;
+    }
+    return result.code;
   }
 }
 
