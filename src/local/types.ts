@@ -1,6 +1,19 @@
 import type { StudioAgentTarget } from "../agents/types";
 import type { StudioScoutManifestConfig } from "../scout/types";
 
+export interface StudioPreviewLink {
+  label: string;
+  path: string;
+}
+
+export interface StudioPreviewWorkspace {
+  id: string;
+  label: string;
+  host: string;
+  description?: string;
+  links: StudioPreviewLink[];
+}
+
 export interface StudioProjectManifest {
   version?: 1;
   id: string;
@@ -12,6 +25,7 @@ export interface StudioProjectManifest {
   host?: string;
   preferredPort?: number;
   env?: Record<string, string>;
+  previews?: StudioPreviewWorkspace[];
   scout?: StudioScoutManifestConfig;
   /**
    * Agents this Studio may dispatch work to. Absent → consumers fall back to
@@ -49,6 +63,7 @@ export interface ResolvedStudio {
   port: number;
   enabled: boolean;
   env: Record<string, string>;
+  previews: StudioPreviewWorkspace[];
 }
 
 export interface StudioRuntimeStatus {
@@ -61,5 +76,6 @@ export interface StudioRuntimeStatus {
   url: string;
   running: boolean;
   supervised: boolean;
+  previews: StudioPreviewWorkspace[];
   pid?: number;
 }

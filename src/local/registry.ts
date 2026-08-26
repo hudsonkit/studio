@@ -197,6 +197,7 @@ export async function resolveStudio(
     port: entry.port,
     enabled: entry.enabled,
     env: manifest.env ?? {},
+    previews: manifest.previews ?? [],
   };
 }
 

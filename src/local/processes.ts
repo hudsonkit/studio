@@ -151,6 +151,7 @@ export class StudioProcessSupervisor {
       url: `http://${studio.host}${studio.rootPath}`,
       running,
       supervised: Boolean(supervised),
+      previews: studio.previews,
       pid: supervised?.child.pid,
     };
   }

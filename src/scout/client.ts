@@ -33,6 +33,23 @@ export async function loadStudioScoutAgents(): Promise<StudioScoutAgentsResponse
   );
 }
 
+export async function loadStudioReviewPairing(): Promise<{
+  pairedAgent: string | null;
+  pairedAt: string | null;
+}> {
+  return readJson(
+    await fetch(studioScoutPaths.studioApi.pairing, { cache: "no-store" }),
+  );
+}
+
+export async function pairStudioReviewAgent(agent: string): Promise<void> {
+  await fetch(studioScoutPaths.studioApi.pairing, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ agent }),
+  });
+}
+
 export async function sendStudioScoutMessage(
   input: StudioScoutMessageInput,
 ): Promise<StudioScoutReceipt> {

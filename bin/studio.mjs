@@ -30,7 +30,17 @@ import {
   startHostDaemon,
   unregisterProject,
 } from './local-dev.mjs';
-import { runDoctor } from './local-doctor.mjs';
+import {
+  printDeployHelp,
+  runDeploy,
+  printDeployProjectHelp,
+  runDeployProject,
+  printUpgradeCloudHelp,
+  runUpgradeCloud,
+  printHostDeployHelp,
+  runHostDeploy,
+  runSync,
+} from './local-deploy.mjs';
 import { hostApiRequest } from './local-host.mjs';
 
 const args = argv.slice(2);
@@ -48,8 +58,12 @@ Commands:
   studio unregister
   studio list [--json]
   studio doctor [--path <path>] [--json]
-  studio components <list|find|show|audit|verify|port|hashes> [--json]
+  studio upgrade-cloud [--host <vm>] [--skip-build] [--json]
+  studio host-deploy [--host <vm>] [--user <u>] [--no-restart]
+  studio deploy-project --path <dir> [--id <id>] [--port <p>] [--mode dev|prod]
   studio create-view <label> [--bucket <b>] [--surface <s>]
+  studio sync --dir <studio-folder> [--id <id>] [--host <vm>]
+  studio bootstrap --host <new-vm> [--with-agent]
 
 Examples:
   studio dev -- next dev --port {port}     # port allocated + remembered
@@ -281,6 +295,32 @@ async function main() {
   }
   if (command === 'components') {
     process.exitCode = runComponents(args.slice(1));
+    return;
+  }
+  if (command === 'deploy') {
+    process.exitCode = await runDeploy(args.slice(1));
+    return;
+  }
+  if (command === 'upgrade-cloud') {
+    process.exitCode = await runUpgradeCloud(args.slice(1));
+    return;
+  }
+  if (command === 'host-deploy') {
+    process.exitCode = await runHostDeploy(args.slice(1));
+    return;
+  }
+  if (command === 'sync') {
+    process.exitCode = await runSync(args.slice(1));
+    return;
+  }
+  if (command === 'bootstrap') {
+    const script = fileURLToPath(new URL('../cloud/bootstrap.sh', import.meta.url));
+    const result = spawnSync('bash', [script, ...args.slice(1)], { stdio: 'inherit' });
+    process.exitCode = result.status ?? 1;
+    return;
+  }
+  if (command === 'deploy-project') {
+    process.exitCode = await runDeployProject(args.slice(1));
     return;
   }
   if (command === 'create-view' || command === 'create') {

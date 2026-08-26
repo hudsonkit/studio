@@ -385,3 +385,5 @@ export async function postStudioScoutMessage(
     webBaseUrl: runtime.config.webBaseUrl,
   };
 }
+
+export { readStudioReviewPairing, writeStudioReviewPairing } from "./pairing";

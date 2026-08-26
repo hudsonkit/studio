@@ -7,6 +7,7 @@ import { StudioProcessSupervisor } from "./processes";
 import type { StudioSupportPaths } from "./paths";
 import { resolveStudioSupportPaths } from "./paths";
 import {
+  previewRoutesForStudios,
   registryToCaddyfileConfig,
   renderStudioLocalCaddyfile,
 } from "./caddy";
@@ -125,23 +126,24 @@ function renderLayout(title: string, body: string): string {
   <style>
     :root {
       color-scheme: light dark;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: #111315;
       color: #f2f4f7;
     }
     * { box-sizing: border-box; }
     body { margin: 0; min-height: 100vh; background: #111315; }
-    main { width: min(980px, calc(100vw - 32px)); margin: 0 auto; padding: 32px 0 48px; }
+    main { width: min(1040px, calc(100vw - 32px)); margin: 0 auto; padding: 32px 0 48px; }
     header { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
     h1 { margin: 0; font-size: 28px; line-height: 1.1; letter-spacing: 0; }
-    h2 { margin: 0 0 8px; font-size: 17px; letter-spacing: 0; }
+    h2, h3 { margin: 0 0 8px; font-size: 17px; letter-spacing: 0; }
     p { margin: 0; color: #9aa4b2; line-height: 1.5; }
     a { color: #7dc4ff; text-decoration: none; }
     a:hover { text-decoration: underline; }
+    a:focus-visible, button:focus-visible { outline: 2px solid #7dc4ff; outline-offset: 3px; }
     .grid { display: grid; gap: 10px; }
     .row {
       display: grid;
-      grid-template-columns: minmax(180px, 1fr) 120px 90px 130px;
+      grid-template-columns: minmax(220px, 1fr) 118px 82px 210px;
       gap: 12px;
       align-items: center;
       padding: 14px 16px;
@@ -149,10 +151,43 @@ function renderLayout(title: string, body: string): string {
       border-radius: 8px;
       background: #171a1d;
     }
+    .preview-row {
+      position: relative;
+      margin-left: 18px;
+      border-color: #252c33;
+      background: #131619;
+    }
+    .preview-row::before {
+      content: "";
+      position: absolute;
+      left: -23px;
+      top: 50%;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ff7466;
+      transform: translateY(-50%);
+    }
+    .preview-links { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+    .preview-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      padding: 0 12px;
+      border: 1px solid #3a424c;
+      border-radius: 7px;
+      background: #20252a;
+      color: #f2f4f7;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .preview-link:hover { background: #292f35; text-decoration: none; }
     .meta { font-size: 12px; color: #7e8896; margin-top: 4px; }
     .pill { display: inline-flex; align-items: center; justify-content: center; min-height: 24px; padding: 0 9px; border-radius: 999px; font-size: 12px; font-weight: 700; }
     .up { color: #98f3b1; background: rgba(61, 174, 95, 0.16); }
     .down { color: #f8c77e; background: rgba(233, 151, 54, 0.16); }
+    .preview { color: #ffb1a9; background: rgba(255, 116, 102, 0.14); }
     button {
       min-height: 34px;
       border: 1px solid #3a424c;
@@ -171,6 +206,9 @@ function renderLayout(title: string, body: string): string {
     @media (max-width: 720px) {
       header { display: block; }
       .row { grid-template-columns: 1fr; }
+      .preview-row { margin-left: 0; }
+      .preview-row::before { display: none; }
+      .preview-links { justify-content: flex-start; }
     }
   </style>
 </head>
@@ -197,7 +235,20 @@ function renderDashboardRows(statuses: readonly StudioRuntimeStatus[]): string {
       <div><span class="pill ${status.running ? "up" : "down"}">${status.running ? "RUNNING" : "STOPPED"}</span></div>
       <div class="meta">:${status.port}</div>
       <button type="button" data-start="${escapeHtml(status.id)}" ${status.running ? "disabled" : ""}>${status.running ? "Running" : "Start"}</button>
-    </section>`).join("")}</div>
+    </section>
+    ${status.previews.map((preview) => `
+      <section class="row preview-row">
+        <div>
+          <h3>${escapeHtml(preview.label)}</h3>
+          <div class="meta">${escapeHtml(preview.description ?? `Preview work hosted by ${status.label}`)}</div>
+        </div>
+        <div><span class="pill preview">PREVIEWS</span></div>
+        <div class="meta">via ${escapeHtml(status.label)}</div>
+        <nav class="preview-links" aria-label="${escapeHtml(`${preview.label} previews`)}">
+          ${preview.links.map((link) => `<a class="preview-link" href="${escapeHtml(`http://${preview.host}${link.path}`)}">${escapeHtml(link.label)}</a>`).join("")}
+        </nav>
+      </section>`).join("")}
+    `).join("")}</div>
     <script>
       for (const button of document.querySelectorAll('[data-start]')) {
         button.addEventListener('click', async () => {
@@ -300,7 +351,11 @@ async function handleRequest(
 
   if (url.pathname === studioLocalApiPaths.caddyfile && request.method === "GET") {
     const registry = await readStudioMachineRegistry(ctx.paths);
-    const caddyfile = renderStudioLocalCaddyfile(registryToCaddyfileConfig(registry));
+    const studios = await listResolvedStudios(ctx.paths);
+    const caddyfile = renderStudioLocalCaddyfile({
+      ...registryToCaddyfileConfig(registry),
+      previews: previewRoutesForStudios(studios),
+    });
     return text(caddyfile, "text/caddyfile; charset=utf-8");
   }
 

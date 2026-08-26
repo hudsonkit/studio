@@ -25,6 +25,20 @@ bun run local ensure .
 
 Then open `http://studio.studio.local`.
 
+## Remote studios
+
+Studio also runs as one Vite host on a VM serving N studios of real source —
+provision a host, `git push` a studio to it, and let a cloud coding agent
+work on designs in place while locals sync back:
+
+```bash
+studio bootstrap --host <new-vm> --with-agent
+studio sync --dir ~/dev/talkie/design/studio --host <new-vm>
+```
+
+See `docs/cloud-studios.md` for the full loop, and `AGENTS.md` for the
+agent-facing working guide.
+
 ## What's here
 
 | Subpath | Contents |
@@ -150,9 +164,26 @@ Each project declares its Studio app in `.studio/project.json`:
   "healthPath": "/studio",
   "rootPath": "/studio",
   "host": "openscout.studio.local",
-  "preferredPort": 3030
+  "preferredPort": 3030,
+  "previews": [
+    {
+      "id": "capture",
+      "label": "Capture",
+      "host": "capture.studio.local",
+      "description": "Recording and overlay treatments.",
+      "links": [
+        { "label": "Controller", "path": "/renders/controller" },
+        { "label": "Keycaps", "path": "/renders/keycaps" }
+      ]
+    }
+  ]
 }
 ```
+
+`previews` are logical workspaces served by the same Studio app. Their `host`
+is an alias routed to the owning process, and they appear under that process in
+the local dashboard. This keeps related design work discoverable without
+registering a duplicate server.
 
 The machine registry lives outside project repos:
 
@@ -171,6 +202,10 @@ call `studio-local ensure` from its repo: if the shared edge is already
 installed, it just registers the project and rewrites the Caddyfile; if it is not
 installed, it creates the support directories, checks Caddy, installs the
 LaunchAgent, then registers the project.
+
+When the canonical Studio host is already attached to a shared port-80 Caddy,
+the LaunchAgent registers project and preview hosts with it instead of starting
+a second Caddy process. The generated Caddyfile remains the standalone fallback.
 
 When the edge is running, it publishes those names with Bonjour/mDNS on macOS,
 runs the supervisor, and runs Caddy from the generated Caddyfile. If a Studio app

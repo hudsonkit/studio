@@ -8,6 +8,24 @@
   "rootPath": "/studio",
   "host": "studio.studio.local",
   "preferredPort": 5191,
+  "previews": [
+    {
+      "id": "action",
+      "label": "Action",
+      "host": "action.studio.local",
+      "description": "Live capture overlays and operator HUD treatments.",
+      "links": [
+        {
+          "label": "Controller",
+          "path": "/renders/act-controller"
+        },
+        {
+          "label": "Keycaps",
+          "path": "/renders/act-keycap"
+        }
+      ]
+    }
+  ],
   "scout": {
     "webBaseUrl": "http://127.0.0.1:43120",
     "identity": {

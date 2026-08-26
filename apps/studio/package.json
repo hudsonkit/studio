@@ -6,6 +6,7 @@
     "dev": "studio dev --port 5191 -- next dev --port 5191",
     "dev:raw": "next dev --port 5191",
     "build": "next build",
+    "start": "next start -H \"$STUDIO_HOST\" -p \"$STUDIO_PORT\"",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

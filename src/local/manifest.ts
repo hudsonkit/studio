@@ -10,7 +10,10 @@ import {
 import { normalizeScoutWebBaseUrl } from "../scout/paths";
 import type { StudioAgentTarget } from "../agents/types";
 import type { StudioScoutManifestConfig } from "../scout/types";
-import type { StudioProjectManifest } from "./types";
+import type {
+  StudioPreviewWorkspace,
+  StudioProjectManifest,
+} from "./types";
 
 export const STUDIO_PROJECT_MANIFEST_PATH = ".studio/project.json";
 
@@ -24,6 +27,7 @@ export interface CreateProjectManifestOptions {
   host?: string;
   preferredPort?: number;
   env?: Record<string, string>;
+  previews?: StudioPreviewWorkspace[];
   scout?: StudioScoutManifestConfig;
 }
 
@@ -75,6 +79,54 @@ function optionalEnv(value: unknown): Record<string, string> | undefined {
     env[key] = raw;
   }
   return env;
+}
+
+function optionalPreviews(value: unknown): StudioPreviewWorkspace[] | undefined {
+  if (value === undefined) return undefined;
+  if (!Array.isArray(value)) {
+    throw new Error("previews must be an array.");
+  }
+
+  const ids = new Set<string>();
+  return value.map((entry, index) => {
+    const field = `previews[${index}]`;
+    if (!isRecord(entry)) {
+      throw new Error(`${field} must be an object.`);
+    }
+
+    const rawId = optionalString(entry.id, `${field}.id`);
+    const label = optionalString(entry.label, `${field}.label`);
+    const host = optionalString(entry.host, `${field}.host`);
+    if (!rawId) throw new Error(`${field}.id is required.`);
+    if (!label) throw new Error(`${field}.label is required.`);
+    if (!host) throw new Error(`${field}.host is required.`);
+    const id = normalizeStudioId(rawId);
+    if (ids.has(id)) throw new Error(`Duplicate preview id: ${id}.`);
+    ids.add(id);
+
+    if (!Array.isArray(entry.links) || entry.links.length === 0) {
+      throw new Error(`${field}.links must contain at least one link.`);
+    }
+    const links = entry.links.map((link, linkIndex) => {
+      const linkField = `${field}.links[${linkIndex}]`;
+      if (!isRecord(link)) {
+        throw new Error(`${linkField} must be an object.`);
+      }
+      const linkLabel = optionalString(link.label, `${linkField}.label`);
+      const path = optionalPath(link.path, `${linkField}.path`);
+      if (!linkLabel) throw new Error(`${linkField}.label is required.`);
+      if (!path) throw new Error(`${linkField}.path is required.`);
+      return { label: linkLabel, path };
+    });
+
+    return {
+      id,
+      label,
+      host: normalizeStudioHost(host),
+      description: optionalString(entry.description, `${field}.description`),
+      links,
+    };
+  });
 }
 
 function optionalScout(value: unknown): StudioScoutManifestConfig | undefined {
@@ -161,6 +213,7 @@ export function parseStudioProjectManifest(
     host: host ? normalizeStudioHost(host) : undefined,
     preferredPort: optionalPort(value.preferredPort, "preferredPort"),
     env: optionalEnv(value.env),
+    previews: optionalPreviews(value.previews),
     scout: optionalScout(value.scout),
     agents: optionalAgents(value.agents),
   };

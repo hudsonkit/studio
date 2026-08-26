@@ -5,12 +5,14 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
+  previewRoutesForStudios,
   registryToCaddyfileConfig,
   writeStudioLocalCaddyfile,
   type StudioLocalEdgeScheme,
 } from "./caddy";
 import { resolveStudioSupportPaths, type StudioSupportPaths } from "./paths";
 import {
+  listResolvedStudios,
   readStudioMachineRegistry,
   registerStudio,
 } from "./registry";
@@ -471,6 +473,7 @@ export async function ensureStudioLocalForProject(
   }
 
   const registry = await readStudioMachineRegistry(paths);
+  const studios = await listResolvedStudios(paths);
   const supervisorPort =
     options.supervisorPort ?? STUDIO_LOCAL_DEFAULT_SUPERVISOR_PORT;
   const scheme = options.scheme ?? "http";
@@ -480,6 +483,7 @@ export async function ensureStudioLocalForProject(
   }
   await writeStudioLocalCaddyfile(paths, {
     ...registryToCaddyfileConfig(registry, supervisorPort),
+    previews: previewRoutesForStudios(studios),
     scheme,
   });
   const service = await installStudioLocalService({

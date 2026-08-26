@@ -12,8 +12,10 @@ import {
 import { ArrowUpRight, MessageSquareText, Plus, Quote, RefreshCw, Trash2, X } from "lucide-react";
 import { useStudioRouter } from "studio/router";
 import {
+  loadStudioReviewPairing,
   loadStudioScoutAgents,
   loadStudioScoutConnection,
+  pairStudioReviewAgent,
   studioScoutComposerUrl,
   type StudioScoutAgentOption,
   type StudioScoutConnection,
@@ -75,13 +77,17 @@ export function StudioScoutProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    loadStudioScoutAgents()
-      .then((response) => {
-        if (!cancelled) setAgents(response.agents);
-      })
-      .catch(() => {
-        if (!cancelled) setAgents([]);
-      });
+    Promise.all([
+      loadStudioScoutAgents().catch(() => ({ agents: [] as StudioScoutAgentOption[] })),
+      loadStudioReviewPairing().catch(() => ({ pairedAgent: null })),
+    ]).then(([agentResponse, pairing]) => {
+      if (cancelled) return;
+      setAgents(agentResponse.agents);
+      const paired = pairing.pairedAgent;
+      if (paired && agentResponse.agents.some((option) => option.selector === paired)) {
+        setTargetSelector(paired);
+      }
+    });
     return () => {
       cancelled = true;
     };
@@ -129,15 +135,15 @@ export function StudioScoutProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open]);
 
+
+  const selectTarget = useCallback((selector: string) => {
+    setTargetSelector(selector);
+    void pairStudioReviewAgent(selector).catch(() => undefined);
+  }, []);
   const target = useMemo<StudioScoutAgentOption | null>(() => {
     if (agents.length === 0) return null;
     return agents.find((option) => option.selector === targetSelector) ?? agents[0];
   }, [agents, targetSelector]);
-
-  const selectTarget = useCallback((selector: string) => {
-    setTargetSelector(selector);
-  }, []);
-
   const embedUrl = useMemo(() => {
     if (!connection?.connected || !connection.webBaseUrl) return null;
     return studioScoutComposerUrl(connection.webBaseUrl, {

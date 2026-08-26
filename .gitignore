@@ -11,3 +11,7 @@ dist
 examples/studio-app/.studio/
 # Annotation sidecars are runtime data, not source
 .studio/annotations/
+.studio/review-pairing.json
+examples/studios/
+.studio/review-pairing.json
+.studio-boot/

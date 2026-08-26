@@ -41,6 +41,18 @@ describe("studio local registry", () => {
       host: "openscout.studio.local",
       preferredPort: 3030,
       healthPath: "/studio",
+      previews: [
+        {
+          id: "Action",
+          label: "Action",
+          host: "action.studio.local",
+          description: "Capture overlay studies.",
+          links: [
+            { label: "Controller", path: "/renders/act-controller" },
+            { label: "Keycaps", path: "renders/act-keycap" },
+          ],
+        },
+      ],
     });
 
     const entry = await registerStudio({ repo, paths });
@@ -61,6 +73,18 @@ describe("studio local registry", () => {
       command: "bun next dev --port {port}",
       healthPath: "/studio",
       port: 3030,
+      previews: [
+        {
+          id: "action",
+          label: "Action",
+          host: "action.studio.local",
+          description: "Capture overlay studies.",
+          links: [
+            { label: "Controller", path: "/renders/act-controller" },
+            { label: "Keycaps", path: "/renders/act-keycap" },
+          ],
+        },
+      ],
     });
     expect(studio?.studioDir).toBe(join(repo, "design/studio"));
   });
