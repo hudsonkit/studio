@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { StudioArtifactSync } from "./local-artifacts.mjs";
 import { foldFeedback, FeedbackError, StudioFeedbackStore } from "./local-feedback.mjs";
 
 /**
@@ -32,6 +33,7 @@ const MCP_INSTRUCTIONS = [
   "Use ask to put a question in front of the reviewer, with optional choices.",
   "wait_for_feedback remembers your cursor per session, so calling it again only returns new feedback.",
   "Reviewers sign their feedback with a name. Your replies are shown under the agent name you give create_page.",
+  "Studies can be mirrored as Claude artifacts: artifact_sync_plan returns the publish, comment-import and reply steps to run with your Artifact tools.",
   "Outside MCP, ~/.studio/studio.json describes this server and ~/.studio/inventory.json lists every space and page.",
 ].join(" ");
 
@@ -195,6 +197,66 @@ export const STUDIO_MCP_TOOLS = [
         resolved: { type: "boolean" },
       },
       required: ["slug", "feedback_id"],
+    },
+  },
+  {
+    name: "artifact_sync_plan",
+    description: "Plan the sync between built Studio studies and their Claude artifacts: what to publish or republish, which comments to import, which Studio replies to post back. Run `bun src/artifacts/cli.ts build --all` in the studio repo first. Execute the plan with the Artifact and ArtifactComments tools.",
+    inputSchema: { type: "object", properties: { ...studioProperty } },
+  },
+  {
+    name: "artifact_link",
+    description: "Record that a study was published as a Claude artifact. Creates the study's feedback page on first link.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        ...studioProperty,
+        study: { type: "string" },
+        url: { type: "string", description: "The claude.ai artifact url." },
+        source_hash: { type: "string", description: "source_hash from the plan for the build you published." },
+      },
+      required: ["study", "url"],
+    },
+  },
+  {
+    name: "artifact_import_comments",
+    description: "Copy artifact comments into Studio feedback on the study. Pass every comment ArtifactComments read returned; ones already imported, and Claude's own replies, are skipped.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        ...studioProperty,
+        study: { type: "string" },
+        comments: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              thread_id: { type: "string" },
+              comment_id: { type: "string", description: "Stable comment id when the read shows one." },
+              author: { type: "string" },
+              body: { type: "string" },
+              from_claude: { type: "boolean", description: "True for replies posted by Claude." },
+            },
+            required: ["thread_id", "body"],
+          },
+        },
+      },
+      required: ["study", "comments"],
+    },
+  },
+  {
+    name: "artifact_mark_mirrored",
+    description: "Record that a Studio reply from the plan's outbound list was posted to its artifact thread.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        ...studioProperty,
+        study: { type: "string" },
+        event_id: { type: "string" },
+        thread_id: { type: "string" },
+        text: { type: "string", description: "The text you posted, so it isn't imported back." },
+      },
+      required: ["study", "event_id", "thread_id"],
     },
   },
 ];
@@ -460,6 +522,15 @@ export function createStudioAgentService({ listStudios, log = () => {}, onChange
       });
       return { id: event.id, status: event.kind === "resolve" ? "resolved" : "open" };
     }
+    if (name.startsWith("artifact_")) {
+      const sync = new StudioArtifactSync({ store, repoRoot: studio.repoRoot });
+      if (name === "artifact_sync_plan") return sync.plan();
+      if (name === "artifact_link") return sync.link({ study: args.study, url: args.url, sourceHash: args.source_hash });
+      if (name === "artifact_import_comments") return sync.importComments({ study: args.study, comments: args.comments });
+      if (name === "artifact_mark_mirrored") {
+        return sync.markMirrored({ study: args.study, eventId: args.event_id, threadId: args.thread_id, text: args.text });
+      }
+    }
     throw new FeedbackError(404, `Unknown tool ${name}.`);
   }
 
@@ -621,7 +692,9 @@ export function createStudioAgentService({ listStudios, log = () => {}, onChange
       sendJson(response, 201, { ok: true, event }, cors);
       return;
     }
-    const event = await store.addReviewerEvent(slug, body);
+    // `source` marks mirrored feedback; only the host sets it, never a page.
+    const { source: _source, ...input } = body;
+    const event = await store.addReviewerEvent(slug, input);
     sendJson(response, 201, { ok: true, event }, cors);
   }
 

@@ -415,7 +415,14 @@ export class StudioFeedbackStore {
     return this.serialize(async () => {
       const page = await this.readPage(slug);
       const author = normalizeAuthor(input.author, "reviewer");
-      const event = { kind, author, parentId: input.parentId || undefined, anchor: input.anchor || undefined };
+      const event = {
+        kind,
+        author,
+        parentId: input.parentId || undefined,
+        anchor: input.anchor || undefined,
+        // Where feedback mirrored from elsewhere came from (an artifact thread). Host-set only.
+        source: input.source || undefined,
+      };
       if (kind === "form_response") {
         const widget = page.widgets.find((candidate) => candidate.id === input.widgetId && candidate.kind === "form");
         if (!widget) throw new FeedbackError(400, `Page "${slug}" has no form "${input.widgetId}".`);

@@ -20,3 +20,4 @@ examples/studio-app/.studio/
 examples/studios/
 .studio/review-pairing.json
 .studio-boot/
+.studio/artifacts/
