@@ -183,7 +183,7 @@ function HomePage() {
             studio / package map
           </div>
           <h1 className="mt-4 max-w-[760px] text-[44px] font-light leading-tight text-studio-ink-strong">
-            Shared primitives for internal design studios.
+            Shared primitives for design studios that live in your repo.
           </h1>
           <p
             className="mt-5 max-w-[64ch] text-[15px] leading-[1.7] text-studio-ink"

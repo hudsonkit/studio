@@ -60,6 +60,8 @@
   "scripts": {
     "dev": "bun run --cwd apps/studio dev",
     "dev:raw": "bun run --cwd apps/studio dev:raw",
+    "dev:site": "vite --config apps/studio/site/vite.config.ts",
+    "build:site": "vite build --config apps/studio/site/vite.config.ts",
     "local": "bun src/local/cli.ts",
     "local:serve": "bun src/local/cli.ts serve",
     "local:edge": "bun src/local/cli.ts edge",

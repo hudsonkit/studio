@@ -21,3 +21,6 @@ examples/studios/
 .studio/review-pairing.json
 .studio-boot/
 .studio/artifacts/
+
+# Static site build
+apps/studio/site/dist/
