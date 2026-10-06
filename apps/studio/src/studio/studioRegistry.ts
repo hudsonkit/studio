@@ -17,7 +17,8 @@ export type Bucket =
   | "package"
   | "recipes"
   | "samples"
-  | "studies";
+  | "studies"
+  | "agents";
 export type Surface = "vision" | "architecture" | "api" | "runtime";
 export type Status = "stable" | "proposal" | "preview" | "wip";
 
@@ -300,6 +301,7 @@ export const registry = createRegistry<Bucket, Surface, Status>({
       recipes: "Recipes",
       samples: "Samples",
       studies: "Studies",
+      agents: "Agent pages",
     })[bucket],
   surfaceLabel: (surface) =>
     ({

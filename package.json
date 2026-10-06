@@ -24,6 +24,7 @@
     "./local": "./src/local/index.ts",
     "./scout": "./src/scout/index.ts",
     "./agents": "./src/agents/index.ts",
+    "./feedback": "./src/feedback/index.ts",
     "./scout/server": "./src/scout/server.ts",
     "./injection": "./src/injection/index.tsx",
     "./atoms": "./src/atoms/index.ts",

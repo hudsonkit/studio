@@ -30,6 +30,8 @@ import {
 import { STU_001_HUDSON_INSERTION_POINTS } from "@/studio/content/proposals";
 import { AnnotatableMarkdown } from "@/studio/AnnotatableMarkdown";
 import { StudioScoutPanel } from "@/studio/StudioScoutPanel";
+import { agentSlugFromPath, feedbackClient } from "@/studio/agentPages";
+import { AgentPage } from "studio/feedback";
 import { ScoutShellAtomsStudy } from "@/studio/studies/ScoutShellAtoms";
 import { TalkieFeatureAtlasStudy } from "@/studio/studies/TalkieFeatureAtlas";
 import { TalkieBehaviorStudy } from "@/studio/studies/talkieBehavior/TalkieBehaviorStudy";
@@ -108,6 +110,9 @@ const proposalBodies: Record<string, string> = {
 
 export function renderStudioPage({ pathname, page }: RenderContext) {
   if (pathname === HOME_HREF) return <HomePage />;
+  // Agent pages route before the page list loads, so a direct link never flashes 404.
+  const agentSlug = agentSlugFromPath(pathname);
+  if (agentSlug) return <AgentPage key={agentSlug} client={feedbackClient} slug={agentSlug} />;
   if (page?.href === "/studio/foundations/scout") {
     return <ScoutPage page={page} />;
   }

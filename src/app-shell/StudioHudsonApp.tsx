@@ -23,6 +23,8 @@ export interface StudioHudsonRenderContext<
   pathname: string;
   page: StudioPage<Bucket, Surface, Status> | undefined;
   registry: StudioRegistry<Bucket, Surface, Status>;
+  /** Pages supplied at runtime through `useExtraPages`. */
+  extraPages: ReadonlyArray<StudioPage<Bucket, Surface, Status>>;
 }
 
 export interface StudioHudsonAppProps<
@@ -36,6 +38,11 @@ export interface StudioHudsonAppProps<
   statusColors: Record<Status, string>;
   renderPage: (context: StudioHudsonRenderContext<Bucket, Surface, Status>) => ReactNode;
   renderStatusPill?: (status: Status) => ReactNode;
+  /**
+   * Pages that exist only at runtime (e.g. agent pages from the host daemon).
+   * They join the registry for routing, the sidebar and the page strip.
+   */
+  useExtraPages?: () => ReadonlyArray<StudioPage<Bucket, Surface, Status>>;
   homeHref?: string;
   resolvePath?: (pathname: string | null, homeHref: string) => string;
   commands?: CommandOption[];
@@ -66,6 +73,7 @@ export function StudioHudsonApp<
   statusColors,
   renderPage,
   renderStatusPill,
+  useExtraPages = useNoExtraPages,
   homeHref = "/",
   resolvePath = defaultResolvePath,
   commands = [],
@@ -92,21 +100,24 @@ export function StudioHudsonApp<
     <RegistryNav
       registry={registry}
       buckets={buckets}
+      extraPages={useExtraPages()}
       statusColors={statusColors}
     />
   );
 
   const StudioContent = () => {
     const pathname = resolvePath(useStudioRouter().usePathname(), homeHref);
-    const page = registry.pageForPath(pathname);
+    const extraPages = useExtraPages();
+    const page = registry.pageForPath(pathname, extraPages);
 
     return (
       <div className={contentClassName}>
         <PageStrip
           registry={registry}
+          extraPages={extraPages}
           renderStatusPill={renderStatusPill}
         />
-        {renderPage({ pathname, page, registry })}
+        {renderPage({ pathname, page, registry, extraPages })}
       </div>
     );
   };
@@ -140,6 +151,12 @@ export function StudioHudsonApp<
 
   if (theme === false) return shell;
   return <ThemeProvider {...theme}>{shell}</ThemeProvider>;
+}
+
+const NO_EXTRA_PAGES: ReadonlyArray<never> = [];
+
+function useNoExtraPages() {
+  return NO_EXTRA_PAGES;
 }
 
 function defaultResolvePath(pathname: string | null, homeHref: string): string {
