@@ -15,10 +15,18 @@ import { createConnection } from "node:net";
 import { homedir } from "node:os";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import {
+  ensureStudioConfig,
+  resolveMcpPort,
+  StudioDiscovery,
+  studioHomeDir,
+} from "./local-discovery.mjs";
+import {
   createStudioAgentService,
   DEFAULT_MCP_PORT,
   isStudioServicePath,
+  MCP_PROTOCOL_VERSION,
   STUDIO_MCP_PATH,
+  STUDIO_MCP_TOOLS,
 } from "./local-agent-api.mjs";
 
 export const HOST_API_VERSION = 1;
@@ -527,17 +535,18 @@ export class StudioHost {
     // Every repo that has registered, kept after its dev server stops so the
     // Studio MCP can still read and write that repo's pages.
     this.knownStudios = new Map();
-    const mcpPortSetting = options.mcpPort ?? this.environment.STUDIO_MCP_PORT;
-    this.requestedMcpPort = mcpPortSetting === "off" || mcpPortSetting === false
-      ? null
-      : mcpPortSetting === undefined || mcpPortSetting === ""
-        ? DEFAULT_MCP_PORT
-        : Number(mcpPortSetting);
+    // Resolved in start() once ~/.studio/config.json has been read.
+    this.mcpPortOption = options.mcpPort;
+    this.requestedMcpPort = null;
     this.mcpPort = null;
     this.mcpServer = null;
+    this.home = options.home || studioHomeDir(this.environment, this.paths.root);
+    this.userHome = options.userHome || homedir();
+    this.discovery = null;
     this.agentService = createStudioAgentService({
       listStudios: () => this.listStudios(),
       log: (message) => this.log(message),
+      onChange: () => this.discovery?.schedule(),
     });
     this.mdns = new Map();
     this.edge = null;
@@ -642,6 +651,7 @@ export class StudioHost {
     const changed = !previous
       || previous.hostname !== studio.hostname
       || previous.repoRoot !== studio.repoRoot;
+    if (changed) this.discovery?.schedule();
     if (save && changed) return this.saveKnownStudios();
     return undefined;
   }
@@ -681,6 +691,21 @@ export class StudioHost {
 
   mcpUrl() {
     return this.mcpPort ? `http://127.0.0.1:${this.mcpPort}${STUDIO_MCP_PATH}` : null;
+  }
+
+  discoveryInput() {
+    return {
+      running: !this.stopping,
+      pid: process.pid,
+      startedAt: this.startedAt,
+      stoppedAt: this.stopping ? new Date().toISOString() : undefined,
+      hostPaths: this.paths,
+      publicPort: this.publicPort,
+      mcpUrl: this.mcpUrl(),
+      mcpPort: this.mcpPort,
+      protocolVersion: MCP_PROTOCOL_VERSION,
+      tools: STUDIO_MCP_TOOLS.map((tool) => tool.name),
+    };
   }
 
   async cleanupOrphanedDiscovery() {
@@ -875,7 +900,26 @@ export class StudioHost {
       await this.reconcile({ replaceEdgeRoutes: true });
       await this.verifyEdge({ force: true }).catch(() => {});
       await this.startControlServer();
+      const config = await ensureStudioConfig(this.home);
+      this.requestedMcpPort = resolveMcpPort({
+        option: this.mcpPortOption,
+        environment: this.environment,
+        config,
+        fallback: DEFAULT_MCP_PORT,
+      });
       await this.startMcpServer();
+      this.discovery = new StudioDiscovery({
+        home: this.home,
+        configuredDevRoot: config.devRoot,
+        // Only the real ~/.studio adopts a derived dev root; an overridden home stays self-contained.
+        deriveDevRoot: this.home === join(this.userHome, ".studio"),
+        userHome: this.userHome,
+        listStudios: () => this.listStudios(),
+        summarizePages: (studio) => this.agentService.summarizePages(studio),
+        manifestInput: () => this.discoveryInput(),
+        log: (message) => this.log(message),
+      });
+      await this.discovery.start();
       this.timer = setInterval(() => {
         this.reconcilePromise = this.reconcilePromise
           .then(() => this.reconcile())
@@ -952,7 +996,10 @@ export class StudioHost {
         this.log(`removed stale registration ${registration.hostname}`);
       }
     }
-    if (removed.length > 0) await this.saveState();
+    if (removed.length > 0) {
+      await this.saveState();
+      this.discovery?.schedule();
+    }
 
     const registrations = [...this.registrations.values()];
     for (const registration of registrations) this.spawnMdns(registration);
@@ -1002,9 +1049,11 @@ export class StudioHost {
         ? new Date(now.getTime() + normalized.liveness.ttlMs).toISOString()
         : null,
     };
+    const wasLive = this.registrations.has(id);
     this.registrations.set(id, registration);
     await this.saveState();
     await this.rememberStudio(registration);
+    if (!wasLive) this.discovery?.schedule();
     this.spawnMdns(registration);
     if (this.edge) await this.edge.ensure(registration.hostname);
     if (this.edge) {
@@ -1047,6 +1096,7 @@ export class StudioHost {
     this.stopMdns(current.hostname);
     if (this.edge) await this.edge.delete(current.hostname);
     await this.saveState();
+    this.discovery?.schedule();
     return current;
   }
 
@@ -1098,6 +1148,9 @@ export class StudioHost {
       registrationCount: this.registrations.size,
       mcpUrl: this.mcpUrl(),
       studioCount: this.knownStudios.size,
+      home: this.home,
+      manifest: join(this.home, "studio.json"),
+      devRoot: this.discovery?.devRoot ?? null,
     };
   }
 
@@ -1160,6 +1213,8 @@ export class StudioHost {
       await this.reconcilePromise.catch(() => {});
       await closeServer(this.controlServer);
       if (this.mcpServer) await closeServer(this.mcpServer);
+      // Only a host that got as far as starting discovery owns the manifest.
+      await this.discovery?.stop();
       await closeServer(this.proxyServer);
       if (this.edge) await this.edge.close();
       for (const hostname of [...this.mdns.keys()]) this.stopMdns(hostname);

@@ -17,7 +17,7 @@
  */
 
 import { spawnSync } from 'child_process';
-import { mkdir, writeFile } from 'fs/promises';
+import { mkdir, readFile, writeFile } from 'fs/promises';
 import { join } from 'path';
 import { argv } from 'process';
 import { fileURLToPath } from 'url';
@@ -53,7 +53,7 @@ studio — local development and design-view scaffolding
 Commands:
   studio dev [--port <port>] [-- <command>]
   studio host start|run|status|stop
-  studio mcp [--json]                 Studio MCP URL for coding agents
+  studio mcp [--json]                 Studio MCP URL and discovery manifest
   studio register --port <port> [--host 127.0.0.1] [--pid <pid>] [--ttl 30s]
   studio heartbeat [--port <changed-port>] [--pid <pid>] [--ttl 30s]
   studio unregister
@@ -257,18 +257,26 @@ Run "studio create-view ..." again for more views. They all share the same persi
 async function mcpCommand(mcpArgs) {
   const status = await startHostDaemon();
   if (!status.mcpUrl) {
-    throw new Error('The Studio host is running without its MCP server. If it predates the MCP, restart it (`studio host stop`); otherwise check STUDIO_MCP_PORT and ~/.studio/host/studio-host.log.');
+    throw new Error('The Studio host is running without its MCP server. If it predates the MCP, restart it (`studio host stop`); otherwise check ~/.studio/config.json (mcp.enabled, mcp.port), STUDIO_MCP_PORT and ~/.studio/host/studio-host.log.');
   }
   if (mcpArgs.includes('--json')) {
-    console.log(JSON.stringify({ url: status.mcpUrl, transport: 'http' }, null, 2));
+    // The manifest is the discovery contract; fall back to the bare url for a host that predates it.
+    const manifest = status.manifest
+      ? await readFile(status.manifest, 'utf8').then(JSON.parse, () => null)
+      : null;
+    console.log(JSON.stringify(manifest ?? { mcp: { url: status.mcpUrl, transport: 'streamable-http' } }, null, 2));
     return 0;
   }
   console.log(`Studio MCP: ${status.mcpUrl}
+${status.manifest ? `Manifest:   ${status.manifest}${status.devRoot ? ` (mirrored in ${join(status.devRoot, '.studio')})` : ''}\n` : ''}
 Connect Claude Code:
   claude mcp add --transport http studio ${status.mcpUrl}
 
 Or add to .mcp.json:
-  { "mcpServers": { "studio": { "type": "http", "url": "${status.mcpUrl}" } } }`);
+  { "mcpServers": { "studio": { "type": "http", "url": "${status.mcpUrl}" } } }
+
+Agents can find this without a port: walk up to the nearest .studio/studio.json
+(falling back to ~/.studio/studio.json). Settings live in ~/.studio/config.json.`);
   return 0;
 }
 

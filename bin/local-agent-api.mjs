@@ -32,6 +32,7 @@ const MCP_INSTRUCTIONS = [
   "Use ask to put a question in front of the reviewer, with optional choices.",
   "wait_for_feedback remembers your cursor per session, so calling it again only returns new feedback.",
   "Reviewers sign their feedback with a name. Your replies are shown under the agent name you give create_page.",
+  "Outside MCP, ~/.studio/studio.json describes this server and ~/.studio/inventory.json lists every space and page.",
 ].join(" ");
 
 const studioProperty = {
@@ -284,8 +285,9 @@ function textResult(value, isError = false) {
  * @param {object} options
  * @param {() => Array<{id: string, repoRoot: string, hostname: string, url: string, live: boolean}>} options.listStudios
  * @param {(message: string) => void} [options.log]
+ * @param {(studioId: string) => void} [options.onChange]  Any page or feedback write.
  */
-export function createStudioAgentService({ listStudios, log = () => {} }) {
+export function createStudioAgentService({ listStudios, log = () => {}, onChange = () => {} }) {
   const stores = new Map();
   const sessions = new Map();
 
@@ -293,8 +295,34 @@ export function createStudioAgentService({ listStudios, log = () => {} }) {
     const existing = stores.get(studio.id);
     if (existing && existing.repoRoot === studio.repoRoot) return existing;
     const store = new StudioFeedbackStore({ studioId: studio.id, repoRoot: studio.repoRoot });
+    store.emitter.on("event", () => onChange(studio.id));
+    store.emitter.on("pages", () => onChange(studio.id));
     stores.set(studio.id, store);
     return store;
+  }
+
+  /** Every page in a studio (archived included) with its open/total reviewer feedback. */
+  async function summarizePages(studio) {
+    const store = storeFor(studio);
+    const pages = await store.listPages({ includeArchived: true });
+    return Promise.all(pages.map(async (page) => {
+      const threads = foldFeedback(await store.listEvents(page.slug));
+      const reviewerItems = threads.filter((thread) => thread.status);
+      return {
+        slug: page.slug,
+        title: page.title,
+        status: page.status,
+        href: page.href,
+        owner: page.owner,
+        revision: page.revision,
+        updatedAt: page.updatedAt,
+        widgets: (page.widgets ?? []).map((widget) => widget.kind),
+        feedback: {
+          open: reviewerItems.filter((thread) => thread.status === "open").length,
+          total: reviewerItems.length,
+        },
+      };
+    }));
   }
 
   function resolveStudio(id) {
@@ -623,7 +651,7 @@ export function createStudioAgentService({ listStudios, log = () => {} }) {
     }
   }
 
-  return { handle, callTool, resolveStudio, sessions, stores };
+  return { handle, callTool, resolveStudio, summarizePages, sessions, stores };
 }
 
 export function isStudioServicePath(url) {
