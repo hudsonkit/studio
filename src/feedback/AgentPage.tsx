@@ -60,11 +60,11 @@ export function AgentPage({ client, slug, renderBody, className }: AgentPageProp
           {page.owner?.client && page.owner.client !== page.owner.name ? ` via ${page.owner.client}` : ""}
           {` · rev ${page.revision} · ${page.status}`}
         </div>
-        <h1 className="mt-4 text-[38px] font-medium leading-tight text-studio-ink-strong">{page.title}</h1>
+        <h1 className="mt-4 text-[38px] font-light leading-tight text-studio-ink-strong">{page.title}</h1>
         {page.blurb ? (
           <p
             className="mt-4 max-w-[66ch] text-[15px] leading-[1.7] text-studio-ink"
-            style={{ fontFamily: "var(--studio-font-serif)" }}
+            style={{ fontFamily: "var(--studio-font-prose)", fontWeight: "var(--studio-font-prose-weight)" }}
           >
             {page.blurb}
           </p>
@@ -242,7 +242,7 @@ function WidgetFrame({ title, meta, children }: { title: string; meta?: string; 
   return (
     <section className="border border-studio-rule bg-studio-surface">
       <div className="flex items-center justify-between border-b border-studio-rule px-4 py-2.5">
-        <span className={`${smallCaps} font-semibold text-studio-ink-faint`}>{title}</span>
+        <span className={`${smallCaps} font-medium text-studio-ink-faint`}>{title}</span>
         {meta ? <span className={`${smallCaps} text-studio-ink-faint`}>{meta}</span> : null}
       </div>
       <div className="flex flex-col gap-4 p-4">{children}</div>

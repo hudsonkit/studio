@@ -25,6 +25,18 @@
   --color-scout-accent: var(--scout-accent);
   --color-scout-accent-soft: var(--scout-accent-soft);
   --tracking-eyebrow: 0.18em;
+  /* Studio's chrome, Hudson's bars included, is light system sans. Labels
+     everywhere are drawn with `font-mono`, so pointing it at the UI face
+     restyles them all at once. Real code uses `font-code` (SF Mono). */
+  --font-sans: var(--studio-font-ui);
+  --font-mono: var(--studio-font-ui);
+  --font-code: var(--studio-font-mono);
+}
+
+/* Hudson's own CSS reads these directly. */
+:root {
+  --hud-font-sans: var(--studio-font-ui);
+  --hud-font-mono: var(--studio-font-ui);
 }
 
 html,
@@ -84,5 +96,6 @@ body {
   margin: 0;
   background: var(--studio-canvas);
   color: var(--studio-ink);
-  font-family: var(--studio-font-sans);
+  font-family: var(--studio-font-ui);
+  font-weight: var(--studio-font-ui-weight);
 }

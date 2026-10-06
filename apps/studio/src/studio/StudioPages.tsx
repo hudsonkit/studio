@@ -182,12 +182,12 @@ function HomePage() {
           <div className="font-mono text-[10px] uppercase tracking-eyebrow text-studio-ink-faint">
             studio / package map
           </div>
-          <h1 className="mt-4 max-w-[760px] text-[44px] font-medium leading-tight text-studio-ink-strong">
+          <h1 className="mt-4 max-w-[760px] text-[44px] font-light leading-tight text-studio-ink-strong">
             Shared primitives for internal design studios.
           </h1>
           <p
             className="mt-5 max-w-[64ch] text-[15px] leading-[1.7] text-studio-ink"
-            style={{ fontFamily: "var(--studio-font-serif)" }}
+            style={{ fontFamily: "var(--studio-font-prose)", fontWeight: "var(--studio-font-prose-weight)" }}
           >
             The package owns the shell, registry, router adapter, theme alias
             layer, status treatment, markdown renderer, and CodeMirror viewer.
@@ -354,12 +354,12 @@ function InjectedReferenceBodyStudy({ study }: { study: StudioAppPage }) {
       <div className="font-mono text-[10px] uppercase tracking-eyebrow text-studio-ink-faint">
         registered study
       </div>
-      <h2 className="mt-3 text-[28px] font-medium leading-tight text-studio-ink-strong">
+      <h2 className="mt-3 text-[28px] font-light leading-tight text-studio-ink-strong">
         {study.label}
       </h2>
       <p
         className="mt-4 max-w-[64ch] text-[15px] leading-[1.7] text-studio-ink"
-        style={{ fontFamily: "var(--studio-font-serif)" }}
+        style={{ fontFamily: "var(--studio-font-prose)", fontWeight: "var(--studio-font-prose-weight)" }}
       >
         This replacement is resolved through the Studio registry by the
         insertion point id, then activated by local URL or storage state.
@@ -435,13 +435,13 @@ function PageHeader({ page }: { page: StudioAppPage }) {
       <div className="font-mono text-[10px] uppercase tracking-eyebrow text-studio-ink-faint">
         {page.bucket} / {page.surface}
       </div>
-      <h1 className="mt-4 text-[38px] font-medium leading-tight text-studio-ink-strong">
+      <h1 className="mt-4 text-[38px] font-light leading-tight text-studio-ink-strong">
         {page.label}
       </h1>
       {page.blurb ? (
         <p
           className="mt-4 max-w-[66ch] text-[15px] leading-[1.7] text-studio-ink"
-          style={{ fontFamily: "var(--studio-font-serif)" }}
+          style={{ fontFamily: "var(--studio-font-prose)", fontWeight: "var(--studio-font-prose-weight)" }}
         >
           {page.blurb}
         </p>
@@ -494,7 +494,7 @@ function NotFoundPage() {
         <Route size={16} />
         <Palette size={16} />
       </div>
-      <h1 className="text-[34px] font-medium text-studio-ink-strong">
+      <h1 className="text-[34px] font-light text-studio-ink-strong">
         Page not found.
       </h1>
       <Link

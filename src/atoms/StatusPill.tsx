@@ -31,7 +31,7 @@ export function StatusPill({
   const bg = `var(--status-${tone}-bg)`;
 
   const base =
-    "inline-block rounded-[3px] font-mono text-[9px] font-semibold tracking-[0.18em]";
+    "inline-block rounded-[3px] font-mono text-[9px] font-medium tracking-[0.18em]";
 
   if (variant === "text") {
     return (

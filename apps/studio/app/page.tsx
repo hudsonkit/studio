@@ -140,7 +140,7 @@ export default function RootPage() {
             <div className="font-mono text-[9px] uppercase tracking-[0.15em] text-studio-ink-faint">
               Terminal
             </div>
-            <code className="mt-3 block overflow-x-auto whitespace-nowrap font-mono text-[12px] text-studio-ink-strong">
+            <code className="mt-3 block overflow-x-auto whitespace-nowrap font-code text-[12px] text-studio-ink-strong">
               $ bun run local ensure .
             </code>
             <div className="mt-5 border-t border-studio-rule pt-4 font-mono text-[10px] text-studio-ink-faint">

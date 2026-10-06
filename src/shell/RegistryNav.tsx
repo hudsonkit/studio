@@ -176,7 +176,7 @@ export function SidebarSectionTitle({ children }: { children: ReactNode }) {
 
 function SectionTitle({ children }: { children: ReactNode }) {
   return (
-    <h2 className="font-mono text-[9px] font-semibold uppercase tracking-[0.22em] text-studio-ink-faint">
+    <h2 className="font-mono text-[9px] font-light uppercase tracking-[0.22em] text-studio-ink-faint">
       · {children}
     </h2>
   );

@@ -28,8 +28,7 @@ function chrome(mode: "dark" | "light"): Extension {
         caretColor: "var(--scout-accent)",
       },
       ".cm-scroller": {
-        fontFamily:
-          '"JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace',
+        fontFamily: "var(--studio-font-mono)",
         fontSize: "12.5px",
         lineHeight: "1.55",
       },

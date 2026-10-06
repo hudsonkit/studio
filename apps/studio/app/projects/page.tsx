@@ -38,7 +38,7 @@ export default async function ProjectsPage() {
           {projects.length === 0 && (
             <li className="py-6 text-sm text-studio-ink-faint">
               No projects shipped yet — run{" "}
-              <code className="font-mono text-xs">studio deploy-project --path …</code>.
+              <code className="font-code text-xs">studio deploy-project --path …</code>.
             </li>
           )}
           {projects.map((project) => (

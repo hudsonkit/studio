@@ -52,7 +52,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-family: var(--studio-font-mono);
+  font-family: var(--studio-font-ui);
   font-size: 10.5px;
   font-weight: 500;
   letter-spacing: 0.22em;
@@ -79,10 +79,8 @@
 }
 
 .eng-page__dek {
-  font-family: var(--studio-font-serif);
-  font-variation-settings: "opsz" 24;
-  font-style: italic;
-  font-weight: 400;
+  font-family: var(--studio-font-prose);
+  font-weight: var(--studio-font-prose-weight);
   font-size: 20px;
   line-height: 1.5;
   color: var(--studio-ink-faint);
@@ -111,7 +109,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 28px;
-  font-family: var(--studio-font-mono);
+  font-family: var(--studio-font-ui);
   font-size: 10.5px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -153,9 +151,8 @@
 
 .eng-doc {
   color: var(--studio-ink);
-  font-family: var(--studio-font-serif);
-  font-variation-settings: "opsz" 16;
-  font-weight: 400;
+  font-family: var(--studio-font-prose);
+  font-weight: var(--studio-font-prose-weight);
   font-size: 16.5px;
   line-height: 1.7;
 }
@@ -231,7 +228,7 @@
 }
 
 .eng-doc h4 {
-  font-family: var(--studio-font-mono);
+  font-family: var(--studio-font-ui);
   font-size: 10.5px;
   font-weight: 600;
   text-transform: uppercase;
@@ -289,7 +286,7 @@
   position: absolute;
   left: -1.6em;
   top: 0.18em;
-  font-family: var(--studio-font-mono);
+  font-family: var(--studio-font-ui);
   font-size: 11px;
   font-weight: 500;
   color: var(--studio-ink-faint);
@@ -355,12 +352,17 @@
   opacity: 0.7;
 }
 
+.eng-doc strong,
+.eng-doc b {
+  font-weight: 500;
+}
+
 /* Blockquote — editorial pull quote */
 .eng-doc blockquote {
   position: relative;
   padding: 0.1em 0 0.1em 28px;
-  font-family: var(--studio-font-serif);
-  font-variation-settings: "opsz" 24;
+  font-family: var(--studio-font-prose);
+  font-weight: var(--studio-font-prose-weight);
   font-size: 19px;
   line-height: 1.55;
   font-style: italic;
@@ -399,7 +401,7 @@
 .eng-doc :not(pre) > code {
   font-family: var(--studio-font-mono);
   font-size: 0.82em;
-  font-weight: 500;
+  font-weight: 400;
   background: var(--studio-chip-bg);
   border: 1px solid var(--studio-chip-border);
   color: var(--studio-ink-strong);
@@ -454,7 +456,7 @@
 }
 
 .eng-doc .eng-codeblock__lang {
-  font-family: var(--studio-font-mono);
+  font-family: var(--studio-font-ui);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.2em;
@@ -541,7 +543,7 @@
 .eng-doc thead th {
   text-align: left;
   padding: 12px 14px 10px;
-  font-family: var(--studio-font-mono);
+  font-family: var(--studio-font-ui);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.22em;

@@ -40,7 +40,7 @@ export function DataRow({ label, children, labelWidth = 120 }: DataRowProps) {
       className="eng-sheet__row grid gap-6 px-4 py-3 sm:px-6"
       style={{ gridTemplateColumns: `${labelWidth}px 1fr` }}
     >
-      <div className="pt-[3px] font-mono text-[9px] font-semibold uppercase tracking-eyebrow text-studio-ink-faint">
+      <div className="pt-[3px] font-mono text-[9px] font-medium uppercase tracking-eyebrow text-studio-ink-faint">
         {label}
       </div>
       <div className="min-w-0 text-[13px] text-studio-ink">{children}</div>
