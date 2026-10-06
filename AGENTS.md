@@ -5,7 +5,7 @@ Working guide for coding agents in this repository. Humans: same facts, see
 
 ## What this repo is
 
-Studio is an internal TypeScript package (shell, registry, docs viewer, code
+Studio is a TypeScript package (shell, registry, docs viewer, code
 viewer, scout integration) plus two runtimes:
 
 - **Local platform app** — `apps/studio`, a Next app; the canonical

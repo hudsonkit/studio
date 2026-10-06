@@ -2,6 +2,7 @@
   "name": "studio",
   "version": "0.0.0",
   "private": true,
+  "license": "Apache-2.0",
   "description": "Shared design-studio primitives and the local Studio host (`studio dev` → {repo}.studio.local): shell, page registry, doc/code viewers, atoms, agent pages and reviewer feedback over MCP.",
   "repository": {
     "type": "git",
