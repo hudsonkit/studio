@@ -53,6 +53,7 @@ studio — local development and design-view scaffolding
 Commands:
   studio dev [--port <port>] [-- <command>]
   studio host start|run|status|stop
+  studio mcp [--json]                 Studio MCP URL for coding agents
   studio register --port <port> [--host 127.0.0.1] [--pid <pid>] [--ttl 30s]
   studio heartbeat [--port <changed-port>] [--pid <pid>] [--ttl 30s]
   studio unregister
@@ -253,7 +254,29 @@ Run "studio create-view ..." again for more views. They all share the same persi
 `);
 }
 
+async function mcpCommand(mcpArgs) {
+  const status = await startHostDaemon();
+  if (!status.mcpUrl) {
+    throw new Error('The Studio host is running without its MCP server. If it predates the MCP, restart it (`studio host stop`); otherwise check STUDIO_MCP_PORT and ~/.studio/host/studio-host.log.');
+  }
+  if (mcpArgs.includes('--json')) {
+    console.log(JSON.stringify({ url: status.mcpUrl, transport: 'http' }, null, 2));
+    return 0;
+  }
+  console.log(`Studio MCP: ${status.mcpUrl}
+Connect Claude Code:
+  claude mcp add --transport http studio ${status.mcpUrl}
+
+Or add to .mcp.json:
+  { "mcpServers": { "studio": { "type": "http", "url": "${status.mcpUrl}" } } }`);
+  return 0;
+}
+
 async function main() {
+  if (command === 'mcp') {
+    process.exitCode = await mcpCommand(args.slice(1));
+    return;
+  }
   if (command === 'dev') {
     process.exitCode = await runLocalDev(args.slice(1));
     return;

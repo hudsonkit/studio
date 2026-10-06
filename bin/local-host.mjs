@@ -14,6 +14,12 @@ import { createServer as createHttpServer, request as httpRequest } from "node:h
 import { createConnection } from "node:net";
 import { homedir } from "node:os";
 import { dirname, isAbsolute, join, resolve } from "node:path";
+import {
+  createStudioAgentService,
+  DEFAULT_MCP_PORT,
+  isStudioServicePath,
+  STUDIO_MCP_PATH,
+} from "./local-agent-api.mjs";
 
 export const HOST_API_VERSION = 1;
 export const DEFAULT_PROXY_PORT = 80;
@@ -96,6 +102,7 @@ export function studioHostPaths(environment = process.env) {
     state: join(root, "registrations.json"),
     discovery: join(root, "discovery-processes.json"),
     devPorts: join(root, "dev-ports.json"),
+    studios: join(root, "studios.json"),
     log: join(root, "studio-host.log"),
     leases: join(root, "leases"),
   };
@@ -272,7 +279,11 @@ function listen(server, options) {
 
 function closeServer(server) {
   if (!server?.listening) return Promise.resolve();
-  return new Promise((resolveClose) => server.close(() => resolveClose()));
+  return new Promise((resolveClose) => {
+    server.close(() => resolveClose());
+    // Event streams and long feedback waits never finish on their own.
+    server.closeAllConnections?.();
+  });
 }
 
 function caddyRequest(adminAddress, path, { method = "GET", body } = {}) {
@@ -513,6 +524,21 @@ export class StudioHost {
       ?? this.environment.STUDIO_HOST_DISABLE_MDNS === "1";
     this.sweepMs = options.sweepMs ?? Number(this.environment.STUDIO_HOST_SWEEP_MS || DEFAULT_SWEEP_MS);
     this.registrations = new Map();
+    // Every repo that has registered, kept after its dev server stops so the
+    // Studio MCP can still read and write that repo's pages.
+    this.knownStudios = new Map();
+    const mcpPortSetting = options.mcpPort ?? this.environment.STUDIO_MCP_PORT;
+    this.requestedMcpPort = mcpPortSetting === "off" || mcpPortSetting === false
+      ? null
+      : mcpPortSetting === undefined || mcpPortSetting === ""
+        ? DEFAULT_MCP_PORT
+        : Number(mcpPortSetting);
+    this.mcpPort = null;
+    this.mcpServer = null;
+    this.agentService = createStudioAgentService({
+      listStudios: () => this.listStudios(),
+      log: (message) => this.log(message),
+    });
     this.mdns = new Map();
     this.edge = null;
     this.edgeNonce = randomUUID();
@@ -586,6 +612,77 @@ export class StudioHost {
     }
   }
 
+  async loadKnownStudios() {
+    try {
+      const saved = JSON.parse(await readFile(this.paths.studios, "utf8"));
+      for (const studio of Array.isArray(saved?.studios) ? saved.studios : []) {
+        if (
+          typeof studio?.id === "string"
+          && typeof studio.hostname === "string"
+          && isAbsolute(studio.repoRoot || "")
+        ) {
+          this.knownStudios.set(studio.id, studio);
+        }
+      }
+    } catch {
+      // No studios have registered yet, or the file is unreadable; registrations rebuild it.
+    }
+    for (const registration of this.registrations.values()) this.rememberStudio(registration, { save: false });
+  }
+
+  rememberStudio(registration, { save = true } = {}) {
+    const previous = this.knownStudios.get(registration.id);
+    const studio = {
+      id: registration.id,
+      hostname: registration.hostname,
+      repoRoot: registration.repo.root,
+      lastSeenAt: new Date().toISOString(),
+    };
+    this.knownStudios.set(registration.id, studio);
+    const changed = !previous
+      || previous.hostname !== studio.hostname
+      || previous.repoRoot !== studio.repoRoot;
+    if (save && changed) return this.saveKnownStudios();
+    return undefined;
+  }
+
+  saveKnownStudios() {
+    return writeAtomic(this.paths.studios, json({
+      version: HOST_API_VERSION,
+      studios: [...this.knownStudios.values()],
+    }));
+  }
+
+  listStudios() {
+    return [...this.knownStudios.values()]
+      .map((studio) => ({
+        ...studio,
+        url: formatLocalUrl(studio.hostname, this.publicPort ?? DEFAULT_PROXY_PORT),
+        live: this.registrations.has(studio.id),
+      }))
+      .sort((a, b) => a.id.localeCompare(b.id));
+  }
+
+  async startMcpServer() {
+    if (this.requestedMcpPort === null) return;
+    const server = createHttpServer((request, response) => {
+      this.agentService.handle(request, response);
+    });
+    try {
+      const address = await listen(server, { host: "127.0.0.1", port: this.requestedMcpPort });
+      this.mcpServer = server;
+      this.mcpPort = address.port;
+    } catch (error) {
+      // The host's job is routing; a busy MCP port must not take routing down with it.
+      await closeServer(server);
+      this.log(`studio mcp unavailable on port ${this.requestedMcpPort}: ${error.message}`);
+    }
+  }
+
+  mcpUrl() {
+    return this.mcpPort ? `http://127.0.0.1:${this.mcpPort}${STUDIO_MCP_PATH}` : null;
+  }
+
   async cleanupOrphanedDiscovery() {
     let entries = [];
     try {
@@ -640,6 +737,13 @@ export class StudioHost {
   }
 
   handleProxyRequest(request, response) {
+    if (isStudioServicePath(request.url)) {
+      this.agentService.handle(request, response, {
+        hostStudioId: this.findRegistrationForRequest(request)?.id
+          ?? this.listStudios().find((studio) => studio.hostname === hostHeaderName(request.headers.host))?.id,
+      });
+      return;
+    }
     if (request.url === EDGE_PROBE_PATH) {
       responseJson(response, 200, {
         ok: true,
@@ -765,11 +869,13 @@ export class StudioHost {
     await this.acquireLock();
     try {
       await this.loadState();
+      await this.loadKnownStudios();
       await this.cleanupOrphanedDiscovery();
       await this.startProxy();
       await this.reconcile({ replaceEdgeRoutes: true });
       await this.verifyEdge({ force: true }).catch(() => {});
       await this.startControlServer();
+      await this.startMcpServer();
       this.timer = setInterval(() => {
         this.reconcilePromise = this.reconcilePromise
           .then(() => this.reconcile())
@@ -898,6 +1004,7 @@ export class StudioHost {
     };
     this.registrations.set(id, registration);
     await this.saveState();
+    await this.rememberStudio(registration);
     this.spawnMdns(registration);
     if (this.edge) await this.edge.ensure(registration.hostname);
     if (this.edge) {
@@ -989,6 +1096,8 @@ export class StudioHost {
       edgeVerified: this.edgeVerification ? this.edgeVerification.ok : null,
       edgeVerification: this.edgeVerification,
       registrationCount: this.registrations.size,
+      mcpUrl: this.mcpUrl(),
+      studioCount: this.knownStudios.size,
     };
   }
 
@@ -1050,6 +1159,7 @@ export class StudioHost {
       clearInterval(this.timer);
       await this.reconcilePromise.catch(() => {});
       await closeServer(this.controlServer);
+      if (this.mcpServer) await closeServer(this.mcpServer);
       await closeServer(this.proxyServer);
       if (this.edge) await this.edge.close();
       for (const hostname of [...this.mdns.keys()]) this.stopMdns(hostname);

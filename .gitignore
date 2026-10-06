@@ -11,6 +11,11 @@ dist
 examples/studio-app/.studio/
 # Annotation sidecars are runtime data, not source
 .studio/annotations/
+# Agent pages and their feedback logs, written by the Studio MCP
+.studio/pages/
+.studio/feedback/
+# Local design-tool output
+.impeccable/
 .studio/review-pairing.json
 examples/studios/
 .studio/review-pairing.json

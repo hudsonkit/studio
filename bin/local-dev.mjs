@@ -431,6 +431,8 @@ async function runDevAttempt({ id, repoName, repoRoot, cwd, port, childCommand, 
         PATH: pathWithLocalBins(cwd),
         PORT: String(port),
         STUDIO_URL: registration.body.url,
+        // Lets the browser find its agent pages when opened on the raw port.
+        NEXT_PUBLIC_STUDIO_ID: id,
       },
       stdio: "inherit",
     });
