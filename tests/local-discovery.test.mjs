@@ -161,6 +161,28 @@ describe("studio discovery files", () => {
     const found = await findStudioManifest(join(repoRoot, "src"), { userHome });
     expect(found.path).toBe(join(mirrored, "studio.json"));
   });
+  test("studios recovered from stale registrations survive the next restart", async () => {
+    const root = await temporaryRoot();
+    const repoRoot = join(root, "repo");
+    await mkdir(repoRoot, { recursive: true });
+    const paths = studioHostPaths({ STUDIO_HOST_DIR: join(root, "host") });
+    const options = { disableMdns: true, paths, proxyPort: 0, mcpPort: 0, sweepMs: 10_000 };
+    const first = await startStudioHost(options);
+    await register(paths, "gone-repo", repoRoot);
+    await first.stop({ preserveState: true });
+    // Simulate a host from before studios.json existed, then let the registration go stale.
+    await rm(paths.studios, { force: true });
+    await rm(repoRoot, { recursive: true, force: true });
+
+    const second = await startStudioHost(options);
+    await second.stop({ preserveState: true });
+    expect(second.registrations.size).toBe(0);
+    expect((await readJson(paths.studios)).studios.map((studio) => studio.id)).toEqual(["gone-repo"]);
+
+    const third = await startStudioHost(options);
+    hosts.push(third);
+    expect(third.listStudios().map((studio) => studio.id)).toEqual(["gone-repo"]);
+  });
 });
 
 describe("discovery helpers", () => {

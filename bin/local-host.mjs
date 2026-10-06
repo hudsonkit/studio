@@ -540,6 +540,8 @@ export class StudioHost {
     this.requestedMcpPort = null;
     this.mcpPort = null;
     this.mcpServer = null;
+    // Upgraded (WebSocket) proxy sockets: server.close() and closeAllConnections() skip them.
+    this.upgradedSockets = new Set();
     this.home = options.home || studioHomeDir(this.environment, this.paths.root);
     this.userHome = options.userHome || homedir();
     this.discovery = null;
@@ -636,7 +638,10 @@ export class StudioHost {
     } catch {
       // No studios have registered yet, or the file is unreadable; registrations rebuild it.
     }
+    const before = this.knownStudios.size;
     for (const registration of this.registrations.values()) this.rememberStudio(registration, { save: false });
+    // Persist now: reconcile may drop these registrations next, and they are the only other record.
+    if (this.knownStudios.size !== before) await this.saveKnownStudios();
   }
 
   rememberStudio(registration, { save = true } = {}) {
@@ -811,7 +816,9 @@ export class StudioHost {
       host: registration.upstream.host,
       port: registration.upstream.port,
     });
+    let connected = false;
     upstream.once("connect", () => {
+      connected = true;
       const rawHeaders = [];
       for (let index = 0; index < request.rawHeaders.length; index += 2) {
         rawHeaders.push(`${request.rawHeaders[index]}: ${request.rawHeaders[index + 1]}`);
@@ -822,9 +829,19 @@ export class StudioHost {
       if (head?.length) upstream.write(head);
       socket.pipe(upstream).pipe(socket);
     });
-    upstream.once("error", () => {
-      if (!socket.destroyed) socket.end("HTTP/1.1 502 Bad Gateway\r\nConnection: close\r\n\r\n");
+    // Either side can drop mid-stream (a closed tab, a restarted dev server). pipe()
+    // does not forward errors, and an unhandled EPIPE here would take the host down.
+    socket.on("error", () => upstream.destroy());
+    upstream.on("error", () => {
+      if (connected || socket.destroyed) socket.destroy();
+      else socket.end("HTTP/1.1 502 Bad Gateway\r\nConnection: close\r\n\r\n");
     });
+    socket.on("close", () => upstream.destroy());
+    upstream.on("close", () => socket.destroy());
+    this.upgradedSockets.add(socket);
+    this.upgradedSockets.add(upstream);
+    socket.once("close", () => this.upgradedSockets.delete(socket));
+    upstream.once("close", () => this.upgradedSockets.delete(upstream));
   }
 
   createProxyServer() {
@@ -1215,6 +1232,7 @@ export class StudioHost {
       if (this.mcpServer) await closeServer(this.mcpServer);
       // Only a host that got as far as starting discovery owns the manifest.
       await this.discovery?.stop();
+      for (const socket of this.upgradedSockets) socket.destroy();
       await closeServer(this.proxyServer);
       if (this.edge) await this.edge.close();
       for (const hostname of [...this.mdns.keys()]) this.stopMdns(hostname);

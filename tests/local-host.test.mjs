@@ -201,6 +201,17 @@ describe("Studio host reconciliation and proxy", () => {
     await new Promise((resolveClose) => upstream.close(resolveClose));
   });
 
+  test("survives dropped upgraded sockets and stops with one still open", async () => {
+    const child = spawn("node", [join(import.meta.dir, "fixtures", "upgrade-drop.mjs")]);
+    let output = "";
+    child.stdout.on("data", (chunk) => { output += chunk; });
+    child.stderr.on("data", (chunk) => { output += chunk; });
+    const code = await new Promise((resolveExit) => child.on("exit", resolveExit));
+    expect(output).toContain("survived alive");
+    expect(output).toContain("stopped");
+    expect(code).toBe(0);
+  }, 20_000);
+
   test("restores live desired registrations after a host restart", async () => {
     const values = await fixture();
     const first = await register(values);
