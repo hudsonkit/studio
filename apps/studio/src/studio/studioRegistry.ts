@@ -252,6 +252,19 @@ export const pages: readonly StudioAppPage[] = [
     ],
   },
   {
+    id: "talkie-behavior-programming",
+    href: "/studio/studies/talkie-behavior-programming",
+    label: "Talkie behavior programming",
+    bucket: "studies",
+    surface: "vision",
+    status: "proposal",
+    blurb: "An illustrative prompt, code, test, and revision sequence for Hey Talkie. Mock data; no execution.",
+    source: [
+      "apps/studio/src/studio/studies/talkieBehavior/TalkieBehaviorStudy.tsx",
+      "apps/studio/src/studio/studies/talkieBehavior/talkieBehavior.css",
+    ],
+  },
+  {
     id: "studio-reference-target-study",
     href: "/studio/samples/targeted-study",
     label: "Targeted study sample",

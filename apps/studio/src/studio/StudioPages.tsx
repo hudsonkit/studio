@@ -32,6 +32,7 @@ import { AnnotatableMarkdown } from "@/studio/AnnotatableMarkdown";
 import { StudioScoutPanel } from "@/studio/StudioScoutPanel";
 import { ScoutShellAtomsStudy } from "@/studio/studies/ScoutShellAtoms";
 import { TalkieFeatureAtlasStudy } from "@/studio/studies/TalkieFeatureAtlas";
+import { TalkieBehaviorStudy } from "@/studio/studies/talkieBehavior/TalkieBehaviorStudy";
 import { TalkieOneThoughtStudy } from "@/studio/studies/TalkieOneThought";
 import {
   HOME_HREF,
@@ -143,6 +144,9 @@ export function renderStudioPage({ pathname, page }: RenderContext) {
   }
   if (page?.href === "/studio/studies/talkie-one-thought") {
     return <TalkieOneThoughtStudy page={page} />;
+  }
+  if (page?.href === "/studio/studies/talkie-behavior-programming") {
+    return <TalkieBehaviorStudy />;
   }
   if (page) return <ReferencePage page={page} sample={referenceSamples[page.href]} />;
   return <NotFoundPage />;
