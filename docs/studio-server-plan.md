@@ -126,7 +126,7 @@ Run the complete `bun test` suite in every phase. `test/local-caddy.test.ts` rem
 
 ## Implementation boundaries
 
-- Do not modify `/Users/arach/dev/talkie/design/studio/app/**`.
+- Do not modify `talkie/design/studio/app/**` in the Talkie repo.
 - Do not stop or restart port `5193`, the shared host, or the edge without coordination.
 - Do not install packages or add large dependencies unless the mount proof requires it.
 - Build the fixture and foundation before changing project defaults.

@@ -312,7 +312,7 @@ function Inspector() {
             <span style={{ fontSize: 14, fontWeight: 600, color: "var(--hud-ink)" }}>action</span>
           </div>
           <span style={{ fontSize: 11, fontFamily: "var(--studio-font-mono)", color: "color-mix(in oklab, var(--hud-ink) 55%, transparent)" }}>
-            /Users/arach/dev/action
+            /Users/dev/code/action
           </span>
         </div>
 

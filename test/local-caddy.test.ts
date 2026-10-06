@@ -13,14 +13,14 @@ describe("studio local Caddyfile", () => {
       studios: [
         {
           id: "studio",
-          repo: "/Users/arach/dev/studio",
+          repo: "/Users/dev/code/studio",
           enabled: true,
           host: "studio.studio.local",
           port: 5191,
         },
         {
           id: "disabled",
-          repo: "/Users/arach/dev/disabled",
+          repo: "/Users/dev/code/disabled",
           enabled: false,
           host: "disabled.studio.local",
           port: 5200,

@@ -7,9 +7,9 @@ function studio(overrides: Partial<ResolvedStudio> = {}): ResolvedStudio {
   return {
     id: "studio",
     label: "Studio",
-    repo: "/Users/arach/dev/studio",
-    manifestPath: "/Users/arach/dev/studio/.studio/project.json",
-    studioDir: "/Users/arach/dev/studio/apps/studio",
+    repo: "/Users/dev/code/studio",
+    manifestPath: "/Users/dev/code/studio/.studio/project.json",
+    studioDir: "/Users/dev/code/studio/apps/studio",
     command: "bun dev",
     healthPath: "/studio",
     rootPath: "/studio",
@@ -35,15 +35,15 @@ describe("shared Studio host routes", () => {
       {
         id: "studio",
         host: "studio.studio.local",
-        repo: "/Users/arach/dev/studio",
-        studioDir: "/Users/arach/dev/studio/apps/studio",
+        repo: "/Users/dev/code/studio",
+        studioDir: "/Users/dev/code/studio/apps/studio",
         port: 5191,
       },
       {
         id: "action",
         host: "action.studio.local",
-        repo: "/Users/arach/dev/studio",
-        studioDir: "/Users/arach/dev/studio/apps/studio",
+        repo: "/Users/dev/code/studio",
+        studioDir: "/Users/dev/code/studio/apps/studio",
         port: 5191,
       },
     ]);

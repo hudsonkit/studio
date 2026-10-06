@@ -812,3 +812,17 @@ See `src/doc/persist.ts` and the example at `examples/studio-app/.studio/AGENTS.
 | Iteration loop (local agents + in-app assistant via sidecars + commands) | ✓ |
 | Editor/markdown dedup via hudsonkit BYO | ⏳ waiting on hudsonkit PR |
 | Consumer wiring | Each subapp decides |
+
+## Repositories
+
+Day-to-day work happens on `arach/studio` (`origin`). Hudson Kit's copy,
+`hudsonkit/studio`, is the `org` remote and gets pushed when a branch is ready:
+
+```bash
+git remote add org https://github.com/hudsonkit/studio.git   # once
+git push org main
+```
+
+The root `workspaces` list reaches into sibling checkouts (`../hudson`,
+`../lattices`, `../action`), and `bun install` fails until those repos are
+checked out next to this one.

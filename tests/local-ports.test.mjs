@@ -202,7 +202,7 @@ describe("remembered port storage", () => {
   test("never drops another project's assignment", async () => {
     const values = await fixture();
     await rememberDevPort({ id: "talkie", repoRoot: values.repoRoot, port: 43_201, paths: values.paths });
-    await rememberDevPort({ id: "action", repoRoot: "/Users/arach/dev/action", port: 43_202, paths: values.paths });
+    await rememberDevPort({ id: "action", repoRoot: "/Users/dev/code/action", port: 43_202, paths: values.paths });
     const stored = await readDevPortAssignments(values.paths);
     expect(stored.assignments.talkie.port).toBe(43_201);
     expect(stored.assignments.action.port).toBe(43_202);

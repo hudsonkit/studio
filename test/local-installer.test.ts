@@ -49,7 +49,7 @@ describe("studio local installer", () => {
 
     const plist = renderStudioLocalLaunchAgent({
       bunBin: "/opt/homebrew/bin/bun",
-      cliPath: "/Users/arach/dev/studio/src/local/cli.ts",
+      cliPath: "/Users/dev/code/studio/src/local/cli.ts",
       paths,
       supervisorPort: 43180,
       scheme: "http",
@@ -85,7 +85,7 @@ describe("studio local installer", () => {
       runCommand: readyCaddyCommand,
       startService: false,
       bunBin: "/opt/homebrew/bin/bun",
-      cliPath: "/Users/arach/dev/studio/src/local/cli.ts",
+      cliPath: "/Users/dev/code/studio/src/local/cli.ts",
     });
 
     expect(report.registered).toMatchObject({
