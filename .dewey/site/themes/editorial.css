@@ -1,0 +1,117 @@
+/**
+ * Dewey Editorial Color Preset
+ * Warm paper surfaces, ink typography, and a restrained burgundy accent.
+ */
+
+:root {
+  --dw-background: #f7f3e9;
+  --dw-foreground: #242733;
+  --dw-primary: #9b2f3f;
+  --dw-primary-foreground: #fffdf7;
+  --dw-secondary: #fffdf7;
+  --dw-secondary-foreground: #242733;
+  --dw-muted: #eee8da;
+  --dw-muted-foreground: #68675f;
+  --dw-accent: #f1dfe0;
+  --dw-accent-foreground: #7f2332;
+  --dw-border: rgba(40, 43, 54, 0.16);
+  --dw-ring: #9b2f3f;
+
+  --color-dw-background: var(--dw-background);
+  --color-dw-foreground: var(--dw-foreground);
+  --color-dw-primary: var(--dw-primary);
+  --color-dw-primary-foreground: var(--dw-primary-foreground);
+  --color-dw-secondary: var(--dw-secondary);
+  --color-dw-secondary-foreground: var(--dw-secondary-foreground);
+  --color-dw-muted: var(--dw-muted);
+  --color-dw-muted-foreground: var(--dw-muted-foreground);
+  --color-dw-accent: var(--dw-accent);
+  --color-dw-accent-foreground: var(--dw-accent-foreground);
+  --color-dw-border: var(--dw-border);
+  --color-dw-border-subtle: rgba(40, 43, 54, 0.08);
+  --color-dw-ring: var(--dw-ring);
+
+  --dw-info: #315b83;
+  --dw-info-foreground: #ffffff;
+  --dw-warning: #a25a12;
+  --dw-warning-foreground: #ffffff;
+  --dw-error: #a12f3d;
+  --dw-error-foreground: #ffffff;
+  --dw-success: #38704d;
+  --dw-success-foreground: #ffffff;
+
+  --color-dw-info: var(--dw-info);
+  --color-dw-info-foreground: var(--dw-info-foreground);
+  --color-dw-warning: var(--dw-warning);
+  --color-dw-warning-foreground: var(--dw-warning-foreground);
+  --color-dw-error: var(--dw-error);
+  --color-dw-error-foreground: var(--dw-error-foreground);
+  --color-dw-success: var(--dw-success);
+  --color-dw-success-foreground: var(--dw-success-foreground);
+
+  --dw-code-bg: #fffdf7;
+  --dw-code-border: rgba(40, 43, 54, 0.16);
+  --color-dw-code-bg: var(--dw-code-bg);
+  --color-dw-code-border: var(--dw-code-border);
+
+  --dw-sidebar-bg: #f1ecdf;
+  --dw-sidebar-border: rgba(40, 43, 54, 0.12);
+  --dw-sidebar-active: #7f2332;
+  --dw-sidebar-active-bg: #ead8d7;
+  --color-dw-sidebar-bg: var(--dw-sidebar-bg);
+  --color-dw-sidebar-border: var(--dw-sidebar-border);
+  --color-dw-sidebar-active: var(--dw-sidebar-active);
+  --color-dw-sidebar-active-bg: var(--dw-sidebar-active-bg);
+
+  --dw-header-bg: rgba(247, 243, 233, 0.94);
+  --dw-header-border: rgba(40, 43, 54, 0.1);
+  --color-dw-header-bg: var(--dw-header-bg);
+  --color-dw-header-border: var(--dw-header-border);
+
+  --color-dw-card-bg: #fffdf7;
+  --color-dw-card-border: rgba(40, 43, 54, 0.14);
+  --color-dw-card-shadow: 0 12px 30px rgba(40, 43, 54, 0.08);
+  --color-dw-card-icon-bg: #f1ecdf;
+}
+
+.dark,
+[data-theme="dark"] {
+  --dw-background: #17181d;
+  --dw-foreground: #f2ecdf;
+  --dw-primary: #e16d7f;
+  --dw-primary-foreground: #17181d;
+  --dw-secondary: #202127;
+  --dw-secondary-foreground: #f2ecdf;
+  --dw-muted: #292a31;
+  --dw-muted-foreground: #aaa498;
+  --dw-accent: #3c292f;
+  --dw-accent-foreground: #ed8796;
+  --dw-border: rgba(255, 248, 231, 0.14);
+  --dw-ring: #e16d7f;
+  --color-dw-border-subtle: rgba(255, 248, 231, 0.07);
+
+  --dw-info: #75a7d1;
+  --dw-info-foreground: #17181d;
+  --dw-warning: #dda45f;
+  --dw-warning-foreground: #17181d;
+  --dw-error: #ed8796;
+  --dw-error-foreground: #17181d;
+  --dw-success: #82b995;
+  --dw-success-foreground: #17181d;
+
+  --dw-code-bg: #202127;
+  --dw-code-border: rgba(255, 248, 231, 0.14);
+
+  --dw-sidebar-bg: #1b1c21;
+  --dw-sidebar-border: rgba(255, 248, 231, 0.1);
+  --dw-sidebar-active: #ed8796;
+  --dw-sidebar-active-bg: #32242a;
+
+  --dw-header-bg: rgba(23, 24, 29, 0.94);
+  --dw-header-border: rgba(255, 248, 231, 0.1);
+
+  --color-dw-card-bg: #202127;
+  --color-dw-card-border: rgba(255, 248, 231, 0.12);
+  --color-dw-card-shadow: none;
+  --color-dw-card-icon-bg: #292a31;
+}

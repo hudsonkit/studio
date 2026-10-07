@@ -1,0 +1,102 @@
+/**
+ * Dewey Emerald Color Preset
+ * Green-accented theme for a fresh, natural feel
+ */
+
+:root {
+  /* ─── Core Colors ────────────────────────────────────────────────────── */
+  --dw-background: hsl(150, 10%, 98%);
+  --dw-foreground: hsl(150, 20%, 10%);
+  --dw-primary: hsl(158, 68%, 30%);
+  --dw-primary-foreground: hsl(0, 0%, 100%);
+  --dw-secondary: hsl(150, 15%, 94%);
+  --dw-secondary-foreground: hsl(150, 20%, 10%);
+  --dw-muted: hsl(150, 10%, 94%);
+  --dw-muted-foreground: hsl(150, 12%, 36%);
+  --dw-accent: hsl(150, 20%, 92%);
+  --dw-accent-foreground: hsl(150, 20%, 10%);
+
+  /* ─── Borders & Rings ────────────────────────────────────────────────── */
+  --dw-border: hsl(150, 10%, 88%);
+  --dw-ring: hsl(158, 68%, 30%);
+
+  /* ─── Tailwind-compatible aliases ─────────────────────────────────────── */
+  --color-dw-background: var(--dw-background);
+  --color-dw-foreground: var(--dw-foreground);
+  --color-dw-primary: var(--dw-primary);
+  --color-dw-primary-foreground: var(--dw-primary-foreground);
+  --color-dw-secondary: var(--dw-secondary);
+  --color-dw-secondary-foreground: var(--dw-secondary-foreground);
+  --color-dw-muted: var(--dw-muted);
+  --color-dw-muted-foreground: var(--dw-muted-foreground);
+  --color-dw-accent: var(--dw-accent);
+  --color-dw-accent-foreground: var(--dw-accent-foreground);
+  --color-dw-border: var(--dw-border);
+  --color-dw-ring: var(--dw-ring);
+
+  /* ─── Semantic Colors ────────────────────────────────────────────────── */
+  /* info / warning / error / success inherited from tokens.css (one accessible
+     contract, light + dark). Override below only for theme identity. */
+
+  /* ─── Code Blocks ────────────────────────────────────────────────────── */
+  --dw-code-bg: hsl(150, 15%, 96%);
+  --dw-code-border: hsl(150, 10%, 88%);
+  --color-dw-code-bg: var(--dw-code-bg);
+  --color-dw-code-border: var(--dw-code-border);
+
+  /* ─── Sidebar ────────────────────────────────────────────────────────── */
+  --dw-sidebar-bg: hsl(150, 15%, 97%);
+  --dw-sidebar-border: hsl(150, 10%, 90%);
+  --dw-sidebar-active: hsl(158, 68%, 30%);
+  --dw-sidebar-active-bg: hsl(158, 64%, 95%);
+  --color-dw-sidebar-bg: var(--dw-sidebar-bg);
+  --color-dw-sidebar-border: var(--dw-sidebar-border);
+  --color-dw-sidebar-active: var(--dw-sidebar-active);
+  --color-dw-sidebar-active-bg: var(--dw-sidebar-active-bg);
+
+  /* ─── Header ─────────────────────────────────────────────────────────── */
+  --dw-header-bg: hsla(150, 10%, 98%, 0.95);
+  --dw-header-border: hsla(150, 20%, 10%, 0.06);
+
+  /* ─── Extended ─────────────────────────────────────────────────────────── */
+  --color-dw-border-subtle: hsla(150, 20%, 10%, 0.06);
+  --color-dw-card-bg: hsl(0, 0%, 100%);
+  --color-dw-card-border: hsl(150, 10%, 88%);
+  --color-dw-card-shadow: 0 1px 3px hsla(150, 20%, 10%, 0.08);
+  --color-dw-card-icon-bg: hsl(150, 15%, 96%);
+}
+
+/* ─── Dark Mode ────────────────────────────────────────────────────────── */
+.dark,
+[data-theme="dark"] {
+  --dw-background: hsl(155, 25%, 7%);
+  --dw-foreground: hsl(150, 15%, 93%);
+  --dw-primary: hsl(158, 64%, 52%);
+  --dw-primary-foreground: hsl(155, 25%, 7%);
+  --dw-secondary: hsl(155, 20%, 13%);
+  --dw-secondary-foreground: hsl(150, 15%, 93%);
+  --dw-muted: hsl(155, 15%, 15%);
+  --dw-muted-foreground: hsl(150, 10%, 60%);
+  --dw-accent: hsl(155, 20%, 17%);
+  --dw-accent-foreground: hsl(150, 15%, 93%);
+
+  --dw-border: hsl(155, 15%, 20%);
+  --dw-ring: hsl(158, 64%, 42%);
+
+  --dw-code-bg: hsl(155, 20%, 11%);
+  --dw-code-border: hsl(155, 15%, 18%);
+
+  --dw-sidebar-bg: hsl(155, 25%, 9%);
+  --dw-sidebar-border: hsl(155, 15%, 15%);
+  --dw-sidebar-active: hsl(158, 64%, 52%);
+  --dw-sidebar-active-bg: hsl(158, 50%, 15%);
+
+  --dw-header-bg: hsla(155, 25%, 7%, 0.9);
+  --dw-header-border: hsla(150, 15%, 93%, 0.08);
+
+  --color-dw-border-subtle: hsla(150, 15%, 93%, 0.04);
+  --color-dw-card-bg: hsla(155, 20%, 13%, 0.8);
+  --color-dw-card-border: hsla(150, 15%, 93%, 0.06);
+  --color-dw-card-shadow: 0 8px 32px hsla(155, 25%, 4%, 0.4);
+  --color-dw-card-icon-bg: hsla(150, 15%, 93%, 0.06);
+}

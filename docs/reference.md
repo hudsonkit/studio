@@ -1,3 +1,7 @@
+---
+kind: reference
+---
+
 # Studio reference
 
 Studio gives product teams a place to keep design studies, engineering notes,
@@ -297,8 +301,8 @@ Hudson-mediated bus can slot in later. See `docs/agent-dispatch.md`.
 
 - **Framework**: Router-agnostic in shape, but Next is the supported runtime for internal devtools adoption. The shell components and `EngMarkdown` read `Link`, `usePathname`, and `useSearchParams` from a `StudioRouter` context. Next.js consumers wrap with `NextRouterProvider` from `studio/router/next`. Without a provider, studio falls back to plain `<a>` + `window.location`.
 - **Theme**: Studio delegates to hudsonkit's theme system. Consumers install hudsonkit (transitive via studio), mount `<HudsonThemeScript />` in `<head>`, wrap with `<ThemeProvider>`, and import `studio/theme.css`. Hudson supplies the `--hud-*` token values per `[data-hudson-theme="light|dark"]`; studio's aliases.css translates those into the `--studio-*` / `--scout-*` / `--status-*` vars that studio's components reference.
-- **Styling**: Tailwind. Studio components use class names like `bg-studio-canvas`, `border-studio-edge`, `text-studio-ink`, `text-studio-ink-faint`. Consumers map those classes in their `tailwind.config.ts` to the `--studio-*` vars (which now resolve via the alias layer to hudsonkit tokens).
-- **Taxonomy is not shared**. Each subapp keeps its own `lib/studio-pages.ts` with concrete `Bucket` / `Surface` / `Status` unions and the page data. The package is generic over those — see `src/registry/`.
+- **Styling**: Tailwind. Studio components use class names like `bg-studio-canvas`, `border-studio-edge`, `text-studio-ink`, `text-studio-ink-faint`. Consumers get those classes by importing `studio/theme.css` and pointing Tailwind's `@source` at Studio's source; they resolve to the `--studio-*` vars (which now resolve via the alias layer to hudsonkit tokens).
+- **Taxonomy is not shared**. Each app keeps its own registry module (here, `apps/studio/src/studio/studioRegistry.ts`) with concrete `Bucket` / `Surface` / `Status` unions and the page data. The package is generic over those — see `src/registry/`.
 - **Insertion points are registered, not scraped**. Host apps and native surfaces expose stable anchor ids; Studio pages that are also studies attach `target` metadata to those anchors. The registry can then resolve which study belongs at a host insertion point without selector-based DOM injection.
 
 ## Adoption recipe (per subapp)
@@ -462,7 +466,7 @@ overrides are `STUDIO_HOST_DIR`, `STUDIO_PROXY_PORT`,
 `STUDIO_INTERNAL_PROXY_PORT`, `STUDIO_HOST_SWEEP_MS`, and
 `STUDIO_HOST_DISABLE_MDNS=1`.
 
-### 1. Add studio + hudsonkit as bun workspace members
+### 1. Add studio and hudsonkit as bun workspace members
 
 Studio and hudsonkit are both consumed as regular dependencies, resolved from local sibling repos via bun workspaces — no `file:` copy install, no npm publish.
 
@@ -533,27 +537,29 @@ const nextConfig = {
 
 Both packages ship raw `.ts/.tsx` and Next.js needs `transpilePackages` to compile workspace source with the consumer's settings.
 
-### 4. Extend Tailwind content
+### 4. Point Tailwind at Studio's source
 
-```ts
-// <consumer>/tailwind.config.ts
-export default {
-  content: [
-    "./app/**/*.{ts,tsx}",
-    "./components/**/*.{ts,tsx}",
-    "../../node_modules/studio/src/**/*.{ts,tsx}",
-    "../../node_modules/hudsonkit/src/**/*.{ts,tsx}",
-  ],
-  // ...
-};
+Tailwind v4 reads its sources from CSS. In the app's `globals.css`:
+
+```css
+@import "tailwindcss";
+@import "hudsonkit/styles";
+@import "studio/theme.css";
+@import "studio/doc.css";
+@import "studio/shell.css";
+
+@source "../app/**/*.{ts,tsx}";
+@source "../src/**/*.{ts,tsx}";
+@source "../node_modules/hudsonkit/src/**/*.{ts,tsx}";
+@source "../node_modules/studio/src/**/*.{ts,tsx}";
 ```
 
-Without this, classes that appear only inside studio's or hudsonkit's source won't be emitted. Both paths resolve via the workspace symlinks; relative depth depends on your layout.
+Without the last two `@source` lines, classes that appear only inside Studio's or Hudson Kit's source won't be emitted. `apps/studio/app/globals.css` is the working example.
 
 ### 5. Build your registry
 
 ```ts
-// design/studio/lib/studio-pages.ts
+// <app>/src/studio/studioRegistry.ts
 import {
   createRegistry,
   type StudioInsertionPoint,
@@ -717,7 +723,7 @@ export function StudioShell({
 
 The `buckets` array drives sidebar render order. Pass `render: (ctx) => ReactNode` for any bucket that needs custom layout (e.g. a "Recent N" list).
 
-### 9. Doc + code viewers
+### 9. Doc and code viewers
 
 ```tsx
 // design/studio/components/EngMarkdown.tsx
@@ -745,13 +751,13 @@ export function CodeViewer(props: { content: string; filename: string }) {
 
 After verifying the studio pages still render, you can remove the local versions of:
 
-- `lib/cm-studio-theme.ts` (now `studio/code` → `studioCodeTheme`)
-- Old helper bodies in `lib/studio-pages.ts` (only the data + types stay)
+- A local CodeMirror theme module (now `studio/code` → `studioCodeTheme`)
+- Old helper bodies in your registry module (only the data and types stay)
 - Custom `--studio-*` / `--scout-*` / `--status-*` CSS-var declarations in `globals.css` (now supplied by `hudsonkit/dist/styles.css` + `studio/theme.css`)
 
 Keep the wrappers in `components/*` — they're now thin re-exports and they preserve your import paths.
 
-### 11. Annotations, decisions & local agents (the iteration loop)
+### 11. Annotations, decisions and local agents (the iteration loop)
 
 Studio ships a first-class system for human + agentic design iteration:
 

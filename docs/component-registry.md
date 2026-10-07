@@ -1,3 +1,7 @@
+---
+kind: reference
+---
+
 # Component registry
 
 `@arach/studio/components` is the component-level sibling of the page

@@ -34,8 +34,32 @@ and components.
   into your studio and wait for your feedback on them.
 - **Flows.** A spatial canvas for whole product journeys, with each screen backed by a
   live design surface.
-- **Shareable studies.** Any study can be bundled into a single self-contained page
-  and published as a Claude artifact, with comments flowing back into Studio.
+- **Shareable studies.** Any study becomes a private Claude artifact that reviewers can
+  comment on without cloning your repo. Their comments come back into Studio.
+
+## Review studies as Claude artifacts
+
+Most people you want feedback from don't have your repo running. Studio bundles a study
+into one self-contained HTML page with React, the compiled CSS and the fonts inline.
+Your agent publishes that page as a private [Claude artifact](https://claude.ai), and
+you share the link like a document.
+
+```txt
+build  →  publish  →  reviewers comment  →  import into Studio  →  reply  →  mirror back
+```
+
+Comments on the artifact come back as threaded feedback on the study. Replies you
+write in Studio are posted to the same artifact thread. The Studio host never calls
+claude.ai: it keeps the bookkeeping and hands your agent a plan through four MCP tools,
+and the agent publishes with its own Artifact tools.
+
+```bash
+bun src/artifacts/cli.ts build --all   # one HTML page per shared study
+studio mcp                              # connect your agent, then ask it to sync artifacts
+```
+
+See [Share studies as Claude artifacts](docs/claude-artifacts.md), or the
+[live walkthrough](https://hudsonkit.com/studio/foundations/claude-artifacts).
 
 ## Quick start
 
@@ -110,11 +134,13 @@ Then wrap your dev script so the project gets its own host:
 
 ## Learn more
 
+- [Docs site](https://hudsonkit.com/studio/docs/): every guide and reference, built with [Dewey](https://github.com/arach/dewey)
+- [Claude artifacts](docs/claude-artifacts.md): publish studies for review and sync comments both ways
 - [Reference](docs/reference.md): every subpath, the local edge, the host API, and conventions
 - [Cloud studios](docs/cloud-studios.md): one host on a VM serving many studios, with an agent working in place
 - [Agent dispatch](docs/agent-dispatch.md): routing annotations to coding agents
 - [Component registry](docs/component-registry.md): audit and verify gates
-- [AGENTS.md](AGENTS.md): the working guide for coding agents in this repo
+- [AGENTS.md](https://github.com/hudsonkit/studio/blob/main/AGENTS.md): the working guide for coding agents in this repo
 
 ## Development
 
@@ -125,4 +151,4 @@ bun run typecheck
 
 ## License
 
-[Apache-2.0](LICENSE)
+[Apache-2.0](https://github.com/hudsonkit/studio/blob/main/LICENSE)

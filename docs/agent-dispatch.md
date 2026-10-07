@@ -1,3 +1,7 @@
+---
+kind: guide
+---
+
 # Agent dispatch
 
 `studio/agents` lets a Studio register the agents it may send work to and

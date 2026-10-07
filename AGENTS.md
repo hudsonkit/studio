@@ -66,7 +66,59 @@ Credentials live in the macOS keychain via `~/.local/bin/secret`
 file tools, never pass secrets as argv, never print them. If a secret leaks
 into a transcript or log, stop and tell the operator to rotate.
 
+## Documentation
+
+Docs are kept with [Dewey](https://github.com/arach/dewey). Guides and
+references in `docs/` build the public docs site and `llms.txt`; `*.agent.md`
+maps describe source areas for agents. After changing a covered area, update
+its map, run `dewey review <doc>`, then `dewey build` and `dewey check`.
+
 ## Commits
 
 Gitmoji prefix (`✨` feature, `🚑` fix, `📝` docs, `♻️` refactor). No
 co-author footers, no "Generated with" lines.
+
+<!-- dewey:begin observed -->
+## Commands
+
+- `bun run build:site`
+- `bun run dev`
+- `bun run dev:raw`
+- `bun run dev:site`
+- `bun run flows:serve`
+- `bun run flows:smoke`
+- `bun run local`
+- `bun run local:edge`
+- `bun run local:serve`
+- `bun run test`
+- `bun run typecheck`
+
+## Where to work
+
+- Working on `.` → read `docs/local-host.agent.md`.
+- Working on `apps/studio/src/studio` → read `docs/studio-app.agent.md`.
+- Working on `src` → read `docs/local-host.agent.md`.
+- Working on `src/agents` → read `docs/collaboration.agent.md`.
+- Working on `src/app-shell` → read `docs/ui-primitives.agent.md`.
+- Working on `src/artifacts` → read `docs/artifacts.agent.md`.
+- Working on `src/atoms` → read `docs/ui-primitives.agent.md`.
+- Working on `src/code` → read `docs/viewers.agent.md`.
+- Working on `src/components` → read `docs/local-host.agent.md`.
+- Working on `src/doc` → read `docs/viewers.agent.md`.
+- Working on `src/feedback` → read `docs/collaboration.agent.md`.
+- Working on `src/flows` → read `docs/local-host.agent.md`.
+- Working on `src/injection` → read `docs/ui-primitives.agent.md`.
+- Working on `src/local` → read `docs/local-host.agent.md`.
+- Working on `src/registry` → read `docs/ui-primitives.agent.md`.
+- Working on `src/router` → read `docs/ui-primitives.agent.md`.
+- Working on `src/scout` → read `docs/collaboration.agent.md`.
+- Working on `src/shell` → read `docs/ui-primitives.agent.md`.
+- Working on `src/theme` → read `docs/ui-primitives.agent.md`.
+
+## Documentation loop
+
+- Read `.agents/skills/dewey-author/SKILL.md` when maintaining docs.
+- Run `dewey build`, then `dewey check`.
+- Review covered-code changes with `dewey review <document>`.
+- Site output: `.dewey/site/`; agent index: `llms.txt`.
+<!-- dewey:end observed -->

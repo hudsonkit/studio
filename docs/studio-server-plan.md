@@ -1,3 +1,7 @@
+---
+kind: history
+---
+
 # Studio server migration plan
 
 ## Decision

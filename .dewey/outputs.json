@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "files": {
+    ".dewey/site/client.js": "7be4dafb1fd3c5085862ba8a5c4ec662bbf63d4f14ea00e7a1050960f050b10f",
+    ".dewey/site/style.css": "4903735eccf83e76e5d15f866fc9800fe0999c0757ad5e80c2fe891350c216d1",
+    ".dewey/site/themes/ocean.css": "4e8d6c533eef4582bd19e39f7d44c7cc8233b0a55e99e7c9933e1f6e3f3aeade",
+    ".dewey/site/themes/neutral.css": "1d19fbe59381a9444dc2498fc87a318dbceb96498b6400e6bb428d9b74e3ce42",
+    ".dewey/site/themes/emerald.css": "d454db5c98c8eb98354decb904cc35fe5abbbbfb14bd09c0206dc53e1b41eb4d",
+    ".dewey/site/themes/editorial.css": "21ba51a8df833d95293678ff0542079df5b4f9a86b24cc8e4bb2c3effeb946ad",
+    ".dewey/site/llms.txt": "a8e19ccb99f4ff1c96290b0e2e3900bd63dd5c347f637955b12d62ef86200a0f",
+    ".dewey/site/index.html": "dd7b6a348ccf8b1212a90d9d175ea7a2e74ada0a5a6929b760b8b8fa28bffef7",
+    ".dewey/site/readme.html": "b33403af73d91a1b158a34d4aa7dc0b222088678e95a936119a9dfa24911dc6c",
+    ".dewey/site/docs/agent-dispatch.html": "f63a43253cebd0e344cd39c0593474d685eaf7ea045f726c04b733329e55086e",
+    ".dewey/site/docs/claude-artifacts.html": "98d290e86982a02d593eeb025bad1dd243cbd9b2f47a591a2de3fbdd1737b6f6",
+    ".dewey/site/docs/cloud-deploy.html": "83f382c921ac018c63cf21b63943b060e57c1a457dcd4fddaf561b8659fffbaa",
+    ".dewey/site/docs/cloud-studios.html": "9f30cfac505c4499acdb7f8c31c2de49b9cb0a86f4c630c6f11a60fd5af95dfe",
+    ".dewey/site/docs/component-registry.html": "c3a98b72d41669e21ade92553b503cef4b503129d79746567d7c9c4c2de64701",
+    ".dewey/site/docs/reference.html": "b267c1682309038215c6097946dc7661cfe8e477d80e579b181be7cd1b25eebb",
+    "llms.txt": "ee759fa40355ffcf9c3e6aab05fe3acd65df57625798d855defe6c790fdc4ecc"
+  }
+}

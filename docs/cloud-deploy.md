@@ -1,3 +1,7 @@
+---
+kind: guide
+---
+
 # Cloud deploy
 
 > Shipping design studios to a VM's multi-studio host? See

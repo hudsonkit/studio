@@ -1,0 +1,92 @@
+/**
+ * Dewey Neutral Color Preset
+ * Warm, elegant theme matching Arc docs style.
+ * Uses warm beige/cream tones with orange accent.
+ */
+
+:root {
+  /* ─── Core Colors ────────────────────────────────────────────────────── */
+  --dw-background: #fffcf9;
+  --dw-foreground: #1c1917;
+
+  --dw-primary: #c2410c;
+  --dw-primary-foreground: #ffffff;
+
+  --dw-secondary: #faf7f5;
+  --dw-secondary-foreground: #292524;
+
+  --dw-muted: #f5f2ef;
+  --dw-muted-foreground: #736b63;
+
+  --dw-accent: #fef3eb;
+  --dw-accent-foreground: #9a3412;
+
+  /* ─── Borders & Rings ────────────────────────────────────────────────── */
+  --dw-border: #e7e5e4;
+  --dw-ring: #c2410c;
+
+  /* ─── Tailwind-compatible aliases (for arbitrary value classes) ─────── */
+  --color-dw-background: var(--dw-background);
+  --color-dw-foreground: var(--dw-foreground);
+  --color-dw-primary: var(--dw-primary);
+  --color-dw-primary-foreground: var(--dw-primary-foreground);
+  --color-dw-secondary: var(--dw-secondary);
+  --color-dw-secondary-foreground: var(--dw-secondary-foreground);
+  --color-dw-muted: var(--dw-muted);
+  --color-dw-muted-foreground: var(--dw-muted-foreground);
+  --color-dw-accent: var(--dw-accent);
+  --color-dw-accent-foreground: var(--dw-accent-foreground);
+  --color-dw-border: var(--dw-border);
+  --color-dw-ring: var(--dw-ring);
+
+  /* ─── Semantic Colors ────────────────────────────────────────────────── */
+  /* info / warning / error / success inherited from tokens.css (one accessible
+     contract, light + dark). Override below only for theme identity. */
+
+  /* ─── Code Blocks ────────────────────────────────────────────────────── */
+  --dw-code-bg: #faf8f6;
+  --dw-code-border: #e7e5e4;
+
+  /* ─── Sidebar ────────────────────────────────────────────────────────── */
+  --dw-sidebar-bg: #faf8f5;
+  --dw-sidebar-border: #f0ebe6;
+  --dw-sidebar-active: #1c1917;
+  --dw-sidebar-active-bg: #fed7aa;
+
+  /* ─── Header ─────────────────────────────────────────────────────────── */
+  --dw-header-bg: rgba(255, 252, 249, 0.95);
+  --dw-header-border: rgba(28, 25, 23, 0.06);
+}
+
+/* ─── Dark Mode ────────────────────────────────────────────────────────── */
+.dark,
+[data-theme="dark"] {
+  --dw-background: #0f172a;
+  --dw-foreground: #f1f5f9;
+
+  --dw-primary: #22c55e;
+  --dw-primary-foreground: #0f172a;
+
+  --dw-secondary: #1e293b;
+  --dw-secondary-foreground: #f1f5f9;
+
+  --dw-muted: #1e293b;
+  --dw-muted-foreground: #94a3b8;
+
+  --dw-accent: #1e293b;
+  --dw-accent-foreground: #f1f5f9;
+
+  --dw-border: #334155;
+  --dw-ring: #22c55e;
+
+  --dw-code-bg: #1e293b;
+  --dw-code-border: #334155;
+
+  --dw-sidebar-bg: #0c1322;
+  --dw-sidebar-border: #1e293b;
+  --dw-sidebar-active: #f1f5f9;
+  --dw-sidebar-active-bg: #1e293b;
+
+  --dw-header-bg: rgba(15, 23, 42, 0.9);
+  --dw-header-border: rgba(241, 245, 249, 0.08);
+}

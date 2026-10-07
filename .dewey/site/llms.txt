@@ -1,0 +1,13 @@
+# Studio
+
+> A design studio that lives in your repo: studies, engineering notes, and working UI experiments kept beside the code they describe, open to the agents that help you build it.
+
+## Documentation
+
+- [Studio](readme.html)
+- [Agent dispatch](docs/agent-dispatch.html)
+- [Share studies as Claude artifacts](docs/claude-artifacts.html)
+- [Cloud deploy](docs/cloud-deploy.html)
+- [Cloud studios — one host, many studios, git-push sync](docs/cloud-studios.html)
+- [Component registry](docs/component-registry.html)
+- [Studio reference](docs/reference.html)

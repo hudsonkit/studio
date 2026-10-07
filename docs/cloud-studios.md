@@ -1,3 +1,7 @@
+---
+kind: guide
+---
+
 # Cloud studios — one host, many studios, git-push sync
 
 A VM runs one Vite host process that serves every studio from **real source**.
@@ -60,7 +64,7 @@ studio sync --dir <studio-folder> --host <vm>
 
 ## Studio contract
 
-`studio.json` at the studio root:
+A studio.json file at the studio root:
 
 ```json
 {

@@ -1,0 +1,30 @@
+{
+  "docs/claude-artifacts.md": {
+    "sourceHash": "cb87c6eb340af01dea6e86a8b873098e51c9d126f5e06ec3c30df297c62a586f",
+    "docHash": "4a3addb403d970e0d472bbcb42b16faa42122938e1ee62c607a1a6b92c4cae0b"
+  },
+  "docs/artifacts.agent.md": {
+    "sourceHash": "cb87c6eb340af01dea6e86a8b873098e51c9d126f5e06ec3c30df297c62a586f",
+    "docHash": "19c32826cf003b67f328fa5c8285a4d6774ff87f1920f20e46c0d90153c0596b"
+  },
+  "docs/collaboration.agent.md": {
+    "sourceHash": "141a414a853eeeefce0f5d0242084b98068ba0ef52b64a6d346f5382c1af9668",
+    "docHash": "e29e64572cd05d5216e14f465dc32bd4afc785d797de83b6f3676e5690c9bf01"
+  },
+  "docs/local-host.agent.md": {
+    "sourceHash": "83a1f89bc463d128545ace0c769408ce7f5df72a887f38d3be49ee67bac116a3",
+    "docHash": "8b8e3cd4810e4381fe336da6b8d6e5402cb20e62f9783ad91671711168b9d848"
+  },
+  "docs/studio-app.agent.md": {
+    "sourceHash": "1735ef989e5804cc55b5e7f1c04ea8e3fc587750bbb2762ec1dc90e743dc0b90",
+    "docHash": "fe60dd4140061ff0348ef6748cbc2345ffcd5fc28e096da86fe4eb656e1bc730"
+  },
+  "docs/ui-primitives.agent.md": {
+    "sourceHash": "57d8267b093379871eeb4afc2bd850284bda24ebec4f00e992d020a91b86cb74",
+    "docHash": "20a9c874035383522b5443505b7ab59f5f209cb1cf5f2bde4898fb346d944d5b"
+  },
+  "docs/viewers.agent.md": {
+    "sourceHash": "709bc865ba04891d3fc7fbff67803d158b93e4d18c1bea694d927185e47ba57d",
+    "docHash": "184122b41b12fdc8a9c6cc134972d363de0c3b30caa36008744d352130e43ec7"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "name": "Studio",
+  "purpose": "A design studio that lives in your repo: studies, engineering notes, and working UI experiments kept beside the code they describe, open to the agents that help you build it.",
+  "rules": [
+    "Run bun test before claiming done; cloud host changes are proven against a live VM with headless renders.",
+    "Never alias bare react imports to a directory; React is a platform singleton.",
+    "Never force-push a studio repo or ship node_modules or build output.",
+    "Credentials come from the keychain via secret; never read dotenv files, pass secrets as argv, or print them.",
+    "Gitmoji commit prefixes; no co-author footers or Generated-with lines."
+  ]
+}

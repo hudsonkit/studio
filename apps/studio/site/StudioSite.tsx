@@ -1,5 +1,5 @@
 import { createElement } from "react";
-import { Boxes, Compass, Github } from "lucide-react";
+import { BookOpen, Boxes, Compass, Github } from "lucide-react";
 import { StudioHudsonApp } from "studio/app-shell";
 import { renderStudioPage } from "@/studio/StudioPages";
 import { BUCKETS, HOME_HREF, STATUS_COLORS, registry, statusPalette } from "@/studio/studioRegistry";
@@ -29,7 +29,7 @@ export function StudioSite() {
       renderStatusPill={(status) => statusPalette.StatusPill({ status })}
       renderPage={renderStudioPage}
       homeHref={HOME_HREF}
-      navActions={<GitHubNavAction />}
+      navActions={<NavActions />}
       routerProvider={HistoryRouterProvider}
       theme={{
         storageKey: "studio.app.theme",
@@ -40,11 +40,27 @@ export function StudioSite() {
   );
 }
 
+const navActionClass =
+  "inline-flex items-center gap-2 border border-studio-rule px-3 py-1.5 font-mono text-[9px] uppercase tracking-[0.14em] text-studio-ink-faint transition hover:border-studio-rule-strong hover:text-studio-ink-strong";
+
+function NavActions() {
+  return (
+    <div className="flex items-center gap-2">
+      {/* The Dewey docs site is copied to dist/docs by build:site. */}
+      <a href="/studio/docs/" className={navActionClass}>
+        Docs
+        <BookOpen size={11} />
+      </a>
+      <GitHubNavAction />
+    </div>
+  );
+}
+
 function GitHubNavAction() {
   return (
     <a
       href="https://github.com/hudsonkit/studio"
-      className="inline-flex items-center gap-2 border border-studio-rule px-3 py-1.5 font-mono text-[9px] uppercase tracking-[0.14em] text-studio-ink-faint transition hover:border-studio-rule-strong hover:text-studio-ink-strong"
+      className={navActionClass}
     >
       View on GitHub
       <Github size={11} />
