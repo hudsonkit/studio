@@ -10,6 +10,7 @@ import {
   Palette,
   Route,
   Shell,
+  Share2,
 } from "lucide-react";
 import { CodeViewer } from "studio/code";
 import { DataRow, EngDocSheet, EngMarkdown } from "studio/doc";
@@ -30,6 +31,7 @@ import {
 import { STU_001_HUDSON_INSERTION_POINTS } from "@/studio/content/proposals";
 import { AnnotatableMarkdown } from "@/studio/AnnotatableMarkdown";
 import { StudioScoutPanel } from "@/studio/StudioScoutPanel";
+import { ArtifactsPage } from "@/studio/ArtifactsPage";
 import { agentSlugFromPath, feedbackClient } from "@/studio/agentPages";
 import { AgentPage } from "studio/feedback";
 import { ScoutShellAtomsStudy } from "@/studio/studies/ScoutShellAtoms";
@@ -113,6 +115,9 @@ export function renderStudioPage({ pathname, page }: RenderContext) {
   // Agent pages route before the page list loads, so a direct link never flashes 404.
   const agentSlug = agentSlugFromPath(pathname);
   if (agentSlug) return <AgentPage key={agentSlug} client={feedbackClient} slug={agentSlug} />;
+  if (page?.href === "/studio/foundations/claude-artifacts") {
+    return <ArtifactsPage page={page} />;
+  }
   if (page?.href === "/studio/foundations/scout") {
     return <ScoutPage page={page} />;
   }
@@ -204,6 +209,25 @@ function HomePage() {
           <DataRow label="runtime">Next + Hudson</DataRow>
         </EngDocSheet>
       </header>
+
+      <Link
+        href="/studio/foundations/claude-artifacts"
+        className="group mt-8 grid gap-4 border border-studio-rule p-6 transition-colors hover:bg-studio-chip-bg md:grid-cols-[1fr_auto]"
+      >
+        <span>
+          <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-eyebrow text-studio-ink-faint">
+            <Share2 size={13} /> New · Claude artifacts
+          </span>
+          <span className="mt-3 block text-[22px] font-light leading-snug text-studio-ink-strong">
+            Share any study as a Claude artifact. Comments come back to Studio.
+          </span>
+          <span className="mt-2 block max-w-[70ch] text-[13px] leading-relaxed text-studio-ink-faint">
+            One self-contained page per study, published by your agent. Reviewers comment without cloning
+            the repo; their threads land as feedback on the study, and your replies go back to them.
+          </span>
+        </span>
+        <ArrowRight size={18} className="self-center text-studio-ink-faint transition-transform group-hover:translate-x-1" />
+      </Link>
 
       <section className="grid gap-8 py-8 lg:grid-cols-[1fr_320px]">
         <div>

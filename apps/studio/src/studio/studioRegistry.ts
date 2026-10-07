@@ -81,6 +81,20 @@ export const pages: readonly StudioAppPage[] = [
     ],
   },
   {
+    href: "/studio/foundations/claude-artifacts",
+    label: "Claude artifacts",
+    bucket: "foundations",
+    surface: "runtime",
+    status: "preview",
+    blurb: "Share any study as a private Claude artifact; comments come back as Studio feedback and replies go back to the thread.",
+    source: [
+      "src/artifacts/buildStudy.ts",
+      "bin/local-artifacts.mjs",
+      "apps/studio/src/studio/artifactStudies.ts",
+      "docs/claude-artifacts.md",
+    ],
+  },
+  {
     href: "/studio/proposals/stu-001-hudson-insertion-points",
     label: "STU-001 - Hudson insertion points",
     bucket: "proposals",

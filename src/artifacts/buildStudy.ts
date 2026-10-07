@@ -210,7 +210,8 @@ export async function buildStudy({ repoRoot, appDir, study, studioUrl = "http://
     format: "iife",
     minify: true,
     plugins: [alias],
-    loader: { ".woff2": "dataurl", ".woff": "dataurl", ".ttf": "dataurl", ".svg": "dataurl", ".png": "dataurl" },
+    // Bun supports the dataurl loader, but its Loader type doesn't list it yet.
+    loader: Object.fromEntries([".woff2", ".woff", ".ttf", ".svg", ".png"].map((ext) => [ext, "dataurl"])) as unknown as Record<string, Bun.Loader>,
     define: { "process.env.NODE_ENV": JSON.stringify("production") },
   });
   await rm(join(app, ".studio-artifact-build"), { recursive: true, force: true });
