@@ -1,0 +1,70 @@
+{
+  "name": "Studio",
+  "purpose": "A design studio that lives in your repo: studies, engineering notes, and working UI experiments kept beside the code they describe, open to the agents that help you build it.",
+  "entrypoints": {
+    "llms": "llms.txt",
+    "llmsFull": "llms-full.txt",
+    "nav": "nav.json"
+  },
+  "groups": [
+    {
+      "title": "Guides",
+      "items": [
+        {
+          "title": "Studio",
+          "summary": "<div align=\"center\">",
+          "url": "readme.html",
+          "markdown": "readme.md",
+          "source": "README.md"
+        },
+        {
+          "title": "Agent dispatch",
+          "summary": "studio/agents lets a Studio register the agents it may send work to and route messages — annotations, context, review passes — to a chosen agent over the existing Scout web transport. It is the multi-agent sibling of the Scout connection (studio/scout): the scout block in .studio/project.json says who this Studio is; t",
+          "url": "docs/agent-dispatch.html",
+          "markdown": "docs/agent-dispatch.md",
+          "source": "docs/agent-dispatch.md"
+        },
+        {
+          "title": "Share studies as Claude artifacts",
+          "summary": "A study is easy to review in Studio itself, if the reviewer has the repo running. Most reviewers don't. Studio can bundle any study into one self-contained page and publish it as a Claude artifact: a private link you can share like a document. Comments left on the artifact come back into Studio as feedback on the study",
+          "url": "docs/claude-artifacts.html",
+          "markdown": "docs/claude-artifacts.md",
+          "source": "docs/claude-artifacts.md"
+        },
+        {
+          "title": "Cloud deploy",
+          "summary": "Shipping design studios to a VM's multi-studio host? See docs/cloud-studios.md — this document covers the platform app deploy (studio.service, releases under /studio-cloud/<release-id>).",
+          "url": "docs/cloud-deploy.html",
+          "markdown": "docs/cloud-deploy.md",
+          "source": "docs/cloud-deploy.md"
+        },
+        {
+          "title": "Cloud studios — one host, many studios, git-push sync",
+          "summary": "A VM runs one Vite host process that serves every studio from real source. Studios are small private git repos; git push ships them, the cloud coding agent edits them in place, and locals pull its commits back. No built assets cross the wire in either direction — only source, transformed per request.",
+          "url": "docs/cloud-studios.html",
+          "markdown": "docs/cloud-studios.md",
+          "source": "docs/cloud-studios.md"
+        }
+      ]
+    },
+    {
+      "title": "Reference",
+      "items": [
+        {
+          "title": "Component registry",
+          "summary": "@arach/studio/components is the component-level sibling of the page registry (@arach/studio/registry). The page registry describes the routes a studio hosts; the component registry describes the components it has finished, so a human or an agent can tell an adoptable component from a sketch without reading its source.",
+          "url": "docs/component-registry.html",
+          "markdown": "docs/component-registry.md",
+          "source": "docs/component-registry.md"
+        },
+        {
+          "title": "Studio reference",
+          "summary": "Studio gives product teams a place to keep design studies, engineering notes, and working UI experiments beside the code they describe.",
+          "url": "docs/reference.html",
+          "markdown": "docs/reference.md",
+          "source": "docs/reference.md"
+        }
+      ]
+    }
+  ]
+}

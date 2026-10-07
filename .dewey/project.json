@@ -8,5 +8,8 @@
     "Never force-push a studio repo or ship node_modules or build output.",
     "Credentials come from the keychain via secret; never read dotenv files, pass secrets as argv, or print them.",
     "Gitmoji commit prefixes; no co-author footers or Generated-with lines."
+  ],
+  "commands": [
+    "scout"
   ]
 }

@@ -2713,4 +2713,154 @@ button.dw-file-tree-row { cursor: pointer; }
   .dw-split-rail { position: static; }
 }
 
-html{scroll-behavior:smooth}body{margin:0;font-family:var(--dw-font-sans);background:var(--dw-background);color:var(--dw-foreground)}*{box-sizing:border-box}button,select,input{font:inherit}.dw-fresh-tools{position:fixed;top:.7rem;right:8rem;z-index:51;display:flex;align-items:center;gap:1rem;max-width:42vw}.dw-fresh-tools .dw-cmd-trigger{width:240px;margin:0}.dw-fresh-theme{display:flex;align-items:center;gap:.5rem;font-size:.75rem;color:var(--dw-muted-foreground)}.dw-fresh-theme select{background:var(--dw-background);color:var(--dw-foreground);border:1px solid var(--dw-border);border-radius:var(--dw-radius);padding:.3rem}.dw-fresh-skip{position:fixed;left:1rem;top:-5rem;z-index:100}.dw-fresh-skip:focus{top:1rem;background:var(--dw-background);padding:.5rem}@media(max-width:1000px){.dw-fresh-theme span{display:none}.dw-fresh-tools{right:7rem;gap:.5rem}.dw-fresh-tools .dw-cmd-trigger{width:160px}}@media(max-width:720px){.dw-fresh-tools{top:auto;bottom:0;left:0;right:0;max-width:none;padding:.6rem 1rem;background:var(--dw-background);border-top:1px solid var(--dw-border);justify-content:space-between}.dw-fresh-tools .dw-cmd-trigger{width:190px}body{padding-bottom:4rem}}
+
+:root{--dw-font-serif:var(--dw-font-sans);--dw-header-height:3.5rem;--dw-hair:color-mix(in srgb,var(--dw-foreground) 9%,transparent)}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;scroll-padding-top:5rem}
+body{margin:0;font-family:var(--dw-font-sans);background:var(--dw-background);color:var(--dw-foreground);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;font-feature-settings:"ss01","cv11"}
+*{box-sizing:border-box}
+::selection{background:color-mix(in srgb,var(--dw-primary) 24%,transparent)}
+button,select,input{font:inherit}
+.dw-fresh-skip{position:fixed;left:1rem;top:-5rem;z-index:100}
+.dw-fresh-skip:focus{top:1rem;background:var(--dw-background);padding:.5rem}
+
+/* Header: a hairline bar, square brand mark, quiet tools. */
+.dw-header{background:var(--dw-header-bg);border-bottom:1px solid var(--dw-hair);-webkit-backdrop-filter:saturate(1.4) blur(14px);backdrop-filter:saturate(1.4) blur(14px)}
+.dw-header-inner{padding-inline:1.25rem}
+.dw-header-brand{gap:.6rem;font-size:.9375rem;font-weight:600;letter-spacing:-.015em;color:var(--dw-foreground);text-decoration:none}
+.dw-header-brand-dot{width:.625rem;height:.625rem;border-radius:2px;background:var(--dw-foreground);box-shadow:3px 3px 0 var(--dw-primary)}
+.dw-fresh-tools{display:flex;align-items:center;gap:.5rem}
+.dw-fresh-tools .dw-cmd-trigger{width:16rem;margin:0;height:2rem;border:1px solid var(--dw-hair);border-radius:.5rem;background:color-mix(in srgb,var(--dw-foreground) 3%,transparent);color:var(--dw-muted-foreground);font-size:.8125rem;transition:border-color .15s,color .15s}
+.dw-fresh-tools .dw-cmd-trigger:hover{border-color:color-mix(in srgb,var(--dw-foreground) 22%,transparent);color:var(--dw-foreground)}
+.dw-cmd-kbd{font-family:var(--dw-font-mono);font-size:.6875rem;letter-spacing:.02em;border:1px solid var(--dw-hair);border-radius:.3rem;background:none;padding:.05rem .35rem;color:var(--dw-muted-foreground)}
+.dw-fresh-theme{height:2rem;padding:0 1.4rem 0 .5rem;border:0;border-radius:.5rem;background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' stroke='%23888' stroke-width='1.5'%3E%3Cpath d='m1 1 4 4 4-4'/%3E%3C/svg%3E") no-repeat right .4rem center;color:var(--dw-muted-foreground);font-family:var(--dw-font-mono);font-size:.6875rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;-webkit-appearance:none;appearance:none;field-sizing:content}
+.dw-fresh-theme:hover,.dw-fresh-theme:focus-visible{color:var(--dw-foreground)}
+.dw-fresh-theme option{text-transform:none;font-family:var(--dw-font-sans);background:var(--dw-background);color:var(--dw-foreground)}
+.dw-header-theme-toggle{color:var(--dw-muted-foreground);border-radius:.5rem}
+.dw-header-theme-toggle:hover{color:var(--dw-foreground);background:color-mix(in srgb,var(--dw-foreground) 5%,transparent)}
+
+/* Sidebar: transparent, mono group labels, a hairline rail with the active page marked on it. */
+.dw-sidebar{background:transparent;border-right:1px solid var(--dw-hair)}
+.dw-sidebar-header{display:flex;align-items:center;justify-content:space-between;gap:.5rem}
+.dw-sidebar-nav{padding-inline:1.25rem}
+.dw-sidebar-group{margin-top:2rem;padding-top:0;border-top:0}
+.dw-sidebar-group:first-child{margin-top:0}
+.dw-sidebar-group-title{margin-bottom:.75rem;padding:0;font-family:var(--dw-font-mono);font-size:.6875rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--dw-muted-foreground)}
+.dw-sidebar-group-title svg{opacity:.5}
+.dw-sidebar-group>.dw-sidebar-list{border-left:1px solid var(--dw-hair);margin-left:.1rem}
+.dw-sidebar-item{position:relative;display:block;margin-left:-1px;padding:.32rem .9rem;border-left:1px solid transparent;border-radius:0;font-size:.875rem;line-height:1.45;color:var(--dw-muted-foreground);text-decoration:none;transition:color .15s,border-color .15s}
+.dw-sidebar-item:hover{color:var(--dw-foreground);background:none;border-left-color:color-mix(in srgb,var(--dw-foreground) 30%,transparent)}
+.dw-sidebar-item.active{background:none;color:var(--dw-foreground);font-weight:550;border-left:2px solid var(--dw-primary);padding-left:calc(.9rem - 1px)}
+.dw-agent-paths{margin-top:2rem}
+.dw-agent-paths-title{margin:0 0 .75rem;font-family:var(--dw-font-mono);font-size:.6875rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--dw-muted-foreground)}
+.dw-agent-paths-list{list-style:none;margin:0 0 0 .1rem;padding:0;border-left:1px solid var(--dw-hair)}
+.dw-agent-path{display:block;margin-left:-1px;padding:.28rem .9rem;border-left:1px solid transparent;font-family:var(--dw-font-mono);font-size:.78rem;color:var(--dw-muted-foreground);text-decoration:none}
+.dw-agent-path:hover{color:var(--dw-foreground);border-left-color:color-mix(in srgb,var(--dw-foreground) 30%,transparent)}
+@media(min-width:1024px){.dw-sidebar-header{display:none}.dw-sidebar-nav{padding-top:3rem}}
+
+/* Page head: a mono eyebrow, then a big tight title and a softer lede. */
+.dw-content{--dw-content-top-offset:3rem;max-width:46rem;padding-bottom:6rem}
+.dw-breadcrumbs{margin-bottom:1.1rem}
+.dw-breadcrumbs-list{display:flex;flex-wrap:wrap;gap:0;list-style:none;margin:0;padding:0;font-family:var(--dw-font-mono);font-size:.6875rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dw-muted-foreground)}
+.dw-breadcrumbs-item{display:flex;align-items:center}
+.dw-breadcrumbs-item:last-child{display:none}
+.dw-breadcrumbs-item:nth-last-child(2) .dw-breadcrumbs-separator{display:none}
+.dw-breadcrumbs-separator{margin:0 .6em;font-size:0}
+.dw-breadcrumbs-separator::before{content:"·";font-size:.6875rem}
+.dw-breadcrumbs-item:first-child .dw-breadcrumbs-label{color:var(--dw-primary)}
+
+.dw-prose{font-size:1rem;line-height:1.72;color:color-mix(in srgb,var(--dw-foreground) 86%,var(--dw-background))}
+.dw-prose strong{color:var(--dw-foreground);font-weight:600}
+.dw-prose h1,.dw-prose h2,.dw-prose h3,.dw-prose h4{color:var(--dw-foreground);font-family:var(--dw-font-sans)}
+.dw-shell-page-title,.dw-prose h1{font-size:clamp(2.1rem,4.2vw,2.85rem);line-height:1.06;font-weight:600;letter-spacing:-.04em;margin:0 0 1.25rem;text-wrap:balance}
+.dw-page-path{display:none}
+.dw-page-head+.dw-prose>p:first-child{font-size:1.1875rem;line-height:1.6;letter-spacing:-.008em;color:var(--dw-muted-foreground);margin-bottom:2.5rem;text-wrap:pretty}
+.dw-page-head+.dw-prose>p:first-child strong,.dw-page-head+.dw-prose>p:first-child a{color:var(--dw-foreground)}
+.dw-prose>.dw-prose{counter-reset:dw-section}
+.dw-prose h2{flex-wrap:wrap;column-gap:.75rem;margin:3.5rem 0 1rem;padding-top:1.5rem;border-top:1px solid var(--dw-hair);font-size:1.5rem;line-height:1.2;font-weight:600;letter-spacing:-.028em;counter-increment:dw-section}
+.dw-prose h2::before{content:"§" counter(dw-section,decimal-leading-zero);flex-basis:100%;margin-bottom:.55rem;font-family:var(--dw-font-mono);font-size:.6875rem;font-weight:500;letter-spacing:.12em;color:var(--dw-muted-foreground)}
+.dw-prose h3{margin:2.25rem 0 .6rem;font-size:1.125rem;font-weight:600;letter-spacing:-.018em}
+.dw-prose h4{margin:1.75rem 0 .5rem;font-family:var(--dw-font-mono);font-size:.75rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--dw-muted-foreground)}
+.dw-heading-link{color:var(--dw-muted-foreground)}
+.dw-prose p,.dw-prose ul,.dw-prose ol{margin:0 0 1.15rem}
+.dw-prose li{margin:.35rem 0}
+.dw-prose li::marker{color:var(--dw-muted-foreground)}
+.dw-prose hr{border:0;border-top:1px solid var(--dw-hair);margin:3rem 0}
+
+/* Links: ink with a hairline underline; the accent shows on hover. */
+.dw-prose a:not(.dw-heading-link){color:var(--dw-foreground);text-decoration:underline;text-decoration-color:color-mix(in srgb,var(--dw-foreground) 28%,transparent);text-decoration-thickness:1px;text-underline-offset:.22em;transition:color .15s,text-decoration-color .15s}
+.dw-prose a:not(.dw-heading-link):hover{color:var(--dw-primary);text-decoration-color:var(--dw-primary)}
+
+/* Code. */
+.dw-prose .dw-code-block{margin:1.5rem 0}
+.dw-prose .dw-code-block-frame{border:1px solid var(--dw-code-border);border-radius:.65rem;background:var(--dw-code-bg);box-shadow:none}
+.dw-prose .dw-code-block-language{top:.7rem;left:1.15rem;font-family:var(--dw-font-mono);font-size:.625rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--dw-muted-foreground);background:none}
+.dw-prose .dw-code-block-pre{padding:1rem 3rem 1rem 1.15rem;font-size:.8125rem;line-height:1.7}
+.dw-prose .dw-code-block-language~.dw-code-block-pre{padding-top:2.1rem}
+.dw-prose .dw-inline-code,.dw-prose :not(pre)>code{padding:.08em .38em;font-family:var(--dw-font-mono);font-size:.84em;font-weight:450;color:var(--dw-foreground);background:color-mix(in srgb,var(--dw-foreground) 4.5%,transparent);border:1px solid var(--dw-hair);border-radius:.3rem}
+.dw-prose a .dw-inline-code{color:inherit}
+
+/* Without JavaScript these controls would do nothing, so they are not shown. */
+html:not(.js) .dw-fresh-tools,html:not(.js) .dw-header-theme-toggle,html:not(.js) .dw-header-menu-btn{display:none!important}
+
+/* Tables: hairline rules, mono column labels. */
+.dw-markdown-table-scroll{margin:1.5rem 0 2rem;border:0;border-top:1px solid var(--dw-foreground);border-radius:0}
+.dw-prose .dw-markdown-table-scroll table{margin:0;font-size:.875rem;width:100%}
+.dw-prose th,.dw-prose td{border:0;border-bottom:1px solid var(--dw-hair);padding:.7rem 1rem .7rem 0;vertical-align:top;line-height:1.55;text-align:left}
+.dw-prose th{background:none;color:var(--dw-muted-foreground);font-family:var(--dw-font-mono);font-size:.6875rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase}
+.dw-prose tr:nth-child(even){background:none}
+
+/* On this page. */
+.dw-toc{padding-top:3rem}
+.dw-toc-title{margin:0 0 .75rem;font-family:var(--dw-font-mono);font-size:.6875rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--dw-muted-foreground)}
+.dw-toc-link{font-size:.8125rem;line-height:1.45;color:var(--dw-muted-foreground);text-decoration:none;transition:color .15s}
+.dw-toc-link:hover{color:var(--dw-foreground)}
+.dw-toc-link.active{color:var(--dw-foreground);border-left-color:var(--dw-primary)}
+
+/* Previous / next. */
+.dw-prev-next{margin-top:4.5rem;padding-top:0;border-top:0;gap:1rem}
+.dw-prev-next-link{border:1px solid var(--dw-hair);border-radius:.65rem;padding:1rem 1.15rem;background:none;text-decoration:none;transition:border-color .15s}
+.dw-prev-next-link:hover{border-color:color-mix(in srgb,var(--dw-foreground) 30%,transparent);background:none}
+.dw-prev-next-label{font-family:var(--dw-font-mono);font-size:.625rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--dw-muted-foreground)}
+.dw-prev-next-title{font-size:.9375rem;font-weight:600;letter-spacing:-.012em;color:var(--dw-foreground)}
+
+@media(max-width:1000px){.dw-fresh-tools .dw-cmd-trigger{width:11rem}}
+@media(max-width:768px){
+  .dw-header-inner{padding-inline:.75rem}
+  .dw-header-menu-btn{display:flex!important;align-items:center;justify-content:center;width:2.25rem;height:2.25rem;padding:0;background:none;border:0;border-radius:var(--dw-radius);color:var(--dw-foreground);cursor:pointer}
+  .dw-header-left{gap:.5rem}
+  .dw-header-right{gap:.25rem}
+  .dw-fresh-tools{gap:.25rem}
+  .dw-fresh-tools .dw-cmd-trigger{width:2.25rem;height:2.25rem;padding:0;justify-content:center;border:0;background:none;color:var(--dw-foreground)}
+  .dw-fresh-tools .dw-cmd-trigger-text{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .dw-fresh-tools .dw-cmd-kbd{display:none}
+  .dw-fresh-tools .dw-cmd-trigger-icon{width:1rem;height:1rem}
+  .dw-fresh-theme{padding-right:1.2rem;background-position:right .25rem center}
+  .dw-sidebar{background:var(--dw-background)}
+  .dw-content{padding-top:calc(var(--dw-header-height) + 1.75rem)}
+  .dw-page-head+.dw-prose>p:first-child{font-size:1.0625rem}
+  .dw-prose h2{margin-top:2.75rem}
+}
+
+.dw-cmd-palette{border:1px solid var(--dw-hair);border-radius:.85rem;background:var(--dw-background);box-shadow:0 24px 70px -20px rgba(0,0,0,.45)}
+.dw-cmd-result{text-decoration:none}
+.dw-cmd-result[aria-selected=true]{background:color-mix(in srgb,var(--dw-foreground) 5%,transparent)}
+.dw-cmd-result-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:.15rem}
+.dw-cmd-result-body .dw-cmd-result-title{flex:none}
+.dw-cmd-result-heading{color:var(--dw-muted-foreground);font-weight:400}
+.dw-cmd-result-snippet{font-size:.75rem;line-height:1.4;color:var(--dw-muted-foreground);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dw-cmd-result-snippet mark{background:color-mix(in srgb,var(--dw-primary) 22%,transparent);color:var(--dw-foreground);border-radius:2px;padding:0 1px}
+.dw-cmd-result-meta{font-family:var(--dw-font-mono);font-size:.625rem;letter-spacing:.1em;text-transform:uppercase}
+/* Raw HTML from READMEs: centered heroes and full-width images. */
+.dw-prose [align=center]{text-align:center}
+.dw-prose [align=center] img{margin-inline:auto}
+.dw-prose [align=center] .dw-markdown-heading{justify-content:center}
+.dw-prose [align=center] h1+p,.dw-prose [align=center]+p{margin-inline:auto}
+.dw-prose img{max-width:100%;height:auto;border-radius:.75rem}
+.dw-prose a:has(> img){display:inline-block;text-decoration:none}
+/* GitHub alerts: [!NOTE], [!TIP], [!IMPORTANT], [!WARNING], [!CAUTION]. */
+.dw-prose .dw-markdown-alert{--dw-alert:var(--dw-primary);margin:1.75rem 0;font-style:normal;color:var(--dw-foreground);border:1px solid var(--dw-hair);border-left:2px solid var(--dw-alert);background:color-mix(in srgb,var(--dw-foreground) 2.5%,transparent);border-radius:0 .5rem .5rem 0;padding:.9rem 1.15rem}
+.dw-prose .dw-markdown-alert>p{margin:.25rem 0}
+.dw-prose .dw-markdown-alert-title{font-family:var(--dw-font-mono);font-size:.6875rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--dw-alert)}
+.dw-prose .dw-markdown-alert-warning{--dw-alert:#d97706}
+.dw-prose .dw-markdown-alert-caution{--dw-alert:#dc2626}
+.dw-prose blockquote:not(.dw-markdown-alert){border-left:2px solid var(--dw-hair);padding-left:1.15rem;color:var(--dw-muted-foreground);font-style:normal}

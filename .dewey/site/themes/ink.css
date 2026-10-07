@@ -1,0 +1,81 @@
+/**
+ * Dewey Ink Color Preset
+ * Warm off-white paper and near-black ink, hairline borders, one emerald accent.
+ * Surfaces stay flat: the sidebar and code share the page tone.
+ */
+
+:root {
+  --dw-background: #fafaf8;
+  --dw-foreground: #161615;
+
+  --dw-primary: #047857;
+  --dw-primary-foreground: #ffffff;
+
+  --dw-secondary: #ffffff;
+  --dw-secondary-foreground: #161615;
+
+  --dw-muted: #f1f0ec;
+  --dw-muted-foreground: #6f6d68;
+
+  --dw-accent: #efeee9;
+  --dw-accent-foreground: #161615;
+
+  --dw-border: #e4e2dc;
+  --dw-ring: #047857;
+
+  --color-dw-background: var(--dw-background);
+  --color-dw-foreground: var(--dw-foreground);
+  --color-dw-primary: var(--dw-primary);
+  --color-dw-primary-foreground: var(--dw-primary-foreground);
+  --color-dw-secondary: var(--dw-secondary);
+  --color-dw-secondary-foreground: var(--dw-secondary-foreground);
+  --color-dw-muted: var(--dw-muted);
+  --color-dw-muted-foreground: var(--dw-muted-foreground);
+  --color-dw-accent: var(--dw-accent);
+  --color-dw-accent-foreground: var(--dw-accent-foreground);
+  --color-dw-border: var(--dw-border);
+  --color-dw-ring: var(--dw-ring);
+
+  --dw-code-bg: #f4f3ef;
+  --dw-code-border: #e4e2dc;
+
+  --dw-sidebar-bg: #fafaf8;
+  --dw-sidebar-border: #e4e2dc;
+  --dw-sidebar-active: #161615;
+  --dw-sidebar-active-bg: #fafaf8;
+
+  --dw-header-bg: rgba(250, 250, 248, 0.82);
+  --dw-header-border: #e4e2dc;
+}
+
+.dark,
+[data-theme="dark"] {
+  --dw-background: #0b0b0c;
+  --dw-foreground: #ecebe6;
+
+  --dw-primary: #34d399;
+  --dw-primary-foreground: #0b0b0c;
+
+  --dw-secondary: #141415;
+  --dw-secondary-foreground: #ecebe6;
+
+  --dw-muted: #161617;
+  --dw-muted-foreground: #8e8c86;
+
+  --dw-accent: #18181a;
+  --dw-accent-foreground: #ecebe6;
+
+  --dw-border: #232325;
+  --dw-ring: #34d399;
+
+  --dw-code-bg: #111112;
+  --dw-code-border: #232325;
+
+  --dw-sidebar-bg: #0b0b0c;
+  --dw-sidebar-border: #232325;
+  --dw-sidebar-active: #ecebe6;
+  --dw-sidebar-active-bg: #0b0b0c;
+
+  --dw-header-bg: rgba(11, 11, 12, 0.78);
+  --dw-header-border: #232325;
+}
