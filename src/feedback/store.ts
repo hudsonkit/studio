@@ -2,21 +2,23 @@
 
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import type { FeedbackClient } from "./client";
-import type { AgentPageDetail, AgentPageMeta } from "./types";
+import type { AgentPageDetail, AgentPageSummary, AgentPresence } from "./types";
 
 export type AgentPagesState =
-  | { status: "loading"; pages: AgentPageMeta[] }
-  | { status: "ready"; pages: AgentPageMeta[] }
-  | { status: "offline"; pages: AgentPageMeta[]; error: string };
+  | { status: "loading"; pages: AgentPageSummary[]; agents: AgentPresence[] }
+  | { status: "ready"; pages: AgentPageSummary[]; agents: AgentPresence[] }
+  | { status: "offline"; pages: AgentPageSummary[]; agents: AgentPresence[]; error: string };
 
 export type AgentPageState =
   | { status: "loading"; detail?: AgentPageDetail }
   | { status: "ready"; detail: AgentPageDetail }
   | { status: "error"; detail?: AgentPageDetail; error: string };
 
-const LOADING_PAGES: AgentPagesState = { status: "loading", pages: [] };
+const LOADING_PAGES: AgentPagesState = { status: "loading", pages: [], agents: [] };
 const LOADING_PAGE: AgentPageState = { status: "loading" };
 const RETRY_MS = [2_000, 5_000, 15_000, 30_000];
+// Feedback and presence arrive in bursts (a wait ends, the agent replies, waits again).
+const LIST_DEBOUNCE_MS = 300;
 
 /**
  * Live view of one studio's agent pages. The SSE stream is opened only while
@@ -32,6 +34,7 @@ class AgentPagesStore {
   private closeStream?: () => void;
   private retryTimer?: ReturnType<typeof setTimeout>;
   private retryIndex = 0;
+  private listTimer?: ReturnType<typeof setTimeout>;
 
   constructor(private readonly client: FeedbackClient) {}
 
@@ -64,14 +67,19 @@ class AgentPagesStore {
   refresh = async () => {
     clearTimeout(this.retryTimer);
     try {
-      const pages = await this.client.listPages();
-      this.pagesState = { status: "ready", pages };
+      const { pages, agents } = await this.client.getOverview();
+      this.pagesState = { status: "ready", pages, agents };
       this.retryIndex = 0;
       this.emit();
       await Promise.all([...this.watched.keys()].map((slug) => this.loadPage(slug)));
       if (!this.closeStream && this.listeners.size > 0) this.openStream();
     } catch (error) {
-      this.pagesState = { status: "offline", pages: this.pagesState.pages, error: messageOf(error) };
+      this.pagesState = {
+        status: "offline",
+        pages: this.pagesState.pages,
+        agents: this.pagesState.agents,
+        error: messageOf(error),
+      };
       this.emit();
       this.scheduleRetry();
     }
@@ -92,14 +100,13 @@ class AgentPagesStore {
     this.closeStream = this.client.subscribe({
       onFeedback: (event) => {
         if (this.watched.has(event.page)) void this.loadPage(event.page);
+        this.reloadList();
       },
       onPages: (change) => {
-        void this.client.listPages().then((pages) => {
-          this.pagesState = { status: "ready", pages };
-          this.emit();
-        }, () => {});
+        this.reloadList();
         if (this.watched.has(change.slug)) void this.loadPage(change.slug);
       },
+      onPresence: () => this.reloadList(),
       onError: () => {
         // Hand reconnection to our own backoff so a stopped daemon is not polled hot.
         this.closeStream?.();
@@ -107,6 +114,16 @@ class AgentPagesStore {
         this.scheduleRetry();
       },
     });
+  }
+
+  private reloadList() {
+    clearTimeout(this.listTimer);
+    this.listTimer = setTimeout(() => {
+      void this.client.getOverview().then(({ pages, agents }) => {
+        this.pagesState = { status: "ready", pages, agents };
+        this.emit();
+      }, () => {});
+    }, LIST_DEBOUNCE_MS);
   }
 
   private scheduleRetry() {
@@ -119,6 +136,7 @@ class AgentPagesStore {
 
   private stop() {
     clearTimeout(this.retryTimer);
+    clearTimeout(this.listTimer);
     this.closeStream?.();
     this.closeStream = undefined;
   }

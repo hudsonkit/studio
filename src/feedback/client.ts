@@ -1,6 +1,7 @@
 import type {
   AgentPageDetail,
   AgentPageMeta,
+  AgentPagesOverview,
   FeedbackEvent,
   ReviewerFeedbackInput,
 } from "./types";
@@ -24,12 +25,16 @@ export interface FeedbackClientOptions {
 export interface FeedbackStreamHandlers {
   onFeedback?: (event: FeedbackEvent) => void;
   onPages?: (change: { type: string; slug: string }) => void;
+  /** An agent started or stopped listening, or was seen for the first time. */
+  onPresence?: () => void;
   onError?: () => void;
 }
 
 export interface FeedbackClient {
   readonly studioId?: string;
   listPages(): Promise<AgentPageMeta[]>;
+  /** Pages with presence and attention, plus every agent seen in this studio. */
+  getOverview(): Promise<AgentPagesOverview>;
   getPage(slug: string): Promise<AgentPageDetail>;
   postFeedback(slug: string, input: ReviewerFeedbackInput, reviewer: string): Promise<FeedbackEvent>;
   setResolved(slug: string, feedbackId: string, resolved: boolean, reviewer: string): Promise<FeedbackEvent>;
@@ -81,6 +86,10 @@ export function createFeedbackClient(options: FeedbackClientOptions = {}): Feedb
     async listPages() {
       return (await request<{ pages: AgentPageMeta[] }>("/pages")).pages;
     },
+    async getOverview() {
+      const { pages, agents } = await request<Partial<AgentPagesOverview>>("/pages");
+      return { pages: pages ?? [], agents: agents ?? [] };
+    },
     async getPage(slug) {
       return request<AgentPageDetail>(slugPath(slug));
     },
@@ -107,6 +116,7 @@ export function createFeedbackClient(options: FeedbackClientOptions = {}): Feedb
       source.addEventListener("pages", (message) => {
         handlers.onPages?.(JSON.parse((message as MessageEvent<string>).data));
       });
+      source.addEventListener("presence", () => handlers.onPresence?.());
       source.onerror = () => handlers.onError?.();
       return () => source.close();
     },

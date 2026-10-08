@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { EngMarkdown } from "../doc";
 import type { FeedbackClient } from "./client";
-import { useAgentPage, useReviewerName } from "./store";
+import { AgentPresenceChip } from "./AgentPresence";
+import { useAgentPage, useAgentPages, useReviewerName } from "./store";
 import type {
   AgentFormField,
   AgentPageDetail,
@@ -36,6 +37,8 @@ const quietButton =
  */
 export function AgentPage({ client, slug, renderBody, className }: AgentPageProps) {
   const state = useAgentPage(client, slug);
+  const summary = useAgentPages(client).pages.find((entry) => entry.slug === slug);
+  useScrollToThread(Boolean(state.detail));
 
   if (!state.detail) {
     return (
@@ -54,11 +57,14 @@ export function AgentPage({ client, slug, renderBody, className }: AgentPageProp
   return (
     <main className={className ?? "w-full px-6 py-10 lg:px-7"}>
       <header className="max-w-[980px] border-b border-studio-rule pb-7">
-        <div className={eyebrow}>
-          Agent page
-          {page.owner?.name ? ` · ${page.owner.name}` : ""}
-          {page.owner?.client && page.owner.client !== page.owner.name ? ` via ${page.owner.client}` : ""}
-          {` · rev ${page.revision} · ${page.status}`}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className={eyebrow}>
+            Agent page
+            {page.owner?.name ? ` · ${page.owner.name}` : ""}
+            {page.owner?.client && page.owner.client !== page.owner.name ? ` via ${page.owner.client}` : ""}
+            {` · rev ${page.revision} · ${page.status}`}
+          </div>
+          <AgentPresenceChip presence={summary?.presence} fallbackName={page.owner?.name} />
         </div>
         <h1 className="mt-4 text-[38px] font-light leading-tight text-studio-ink-strong">{page.title}</h1>
         {page.blurb ? (
@@ -97,6 +103,17 @@ export function AgentPage({ client, slug, renderBody, className }: AgentPageProp
       </div>
     </main>
   );
+}
+
+/** Inbox links land on `#thread-<id>`; the thread only exists once the page has loaded. */
+function useScrollToThread(loaded: boolean) {
+  const done = useRef(false);
+  useEffect(() => {
+    if (!loaded || done.current || typeof window === "undefined") return;
+    done.current = true;
+    const id = decodeURIComponent(window.location.hash.slice(1));
+    if (id.startsWith("thread-")) document.getElementById(id)?.scrollIntoView({ block: "center" });
+  }, [loaded]);
 }
 
 function Widget({
@@ -301,7 +318,7 @@ function CommentThread({
   const [replying, setReplying] = useState(false);
   const isResolved = thread.status === "resolved";
   return (
-    <article className={`border-t border-studio-rule pt-3 ${isResolved ? "opacity-60" : ""}`}>
+    <article id={`thread-${thread.id}`} className={`scroll-mt-24 border-t border-studio-rule pt-3 ${isResolved ? "opacity-60" : ""}`}>
       <Message item={thread} />
       {flatten(thread.replies).map((reply) => (
         <div key={reply.id} className="mt-3 border-l border-studio-rule pl-3">
@@ -350,7 +367,8 @@ function ChatWidget({ client, slug, threads }: { client: FeedbackClient; slug: s
             return (
               <li
                 key={message.id}
-                className={`max-w-[88%] border px-3 py-2 ${mine ? "self-end border-studio-rule-strong" : "self-start border-studio-rule bg-studio-canvas"}`}
+                id={`thread-${message.id}`}
+                className={`scroll-mt-24 max-w-[88%] border px-3 py-2 ${mine ? "self-end border-studio-rule-strong" : "self-start border-studio-rule bg-studio-canvas"}`}
               >
                 <Message item={message} />
               </li>
@@ -502,7 +520,7 @@ function QuestionCard({ client, slug, question }: { client: FeedbackClient; slug
   const answered = answers.length > 0;
 
   return (
-    <section className={`border px-4 py-3 ${answered ? "border-studio-rule" : "border-studio-rule-strong bg-studio-surface"}`}>
+    <section id={`thread-${question.id}`} className={`scroll-mt-24 border px-4 py-3 ${answered ? "border-studio-rule" : "border-studio-rule-strong bg-studio-surface"}`}>
       <div className={`${smallCaps} ${answered ? "text-studio-ink-faint" : "text-scout-accent"}`}>
         {question.author.name} {answered ? "asked" : "is asking"}
       </div>

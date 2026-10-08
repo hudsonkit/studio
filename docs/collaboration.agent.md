@@ -8,10 +8,12 @@ covers: ["src/feedback/**", "src/agents/**", "src/scout/**"]
 
 ## Files
 
-- `src/feedback/types.ts` — wire types for agent pages, widgets, feedback events, folded threads and reviewer input, as the host serves them.
+- `src/feedback/types.ts` — wire types for agent pages, widgets, feedback events, folded threads and reviewer input, as the host serves them. Also `AgentPresence`, `PageAttention`/`AttentionItem` and `AgentPageSummary` (a list entry with `presence` and `attention`).
 - `src/feedback/client.ts` — `createFeedbackClient`: fetch and SSE client for the host's `/__studio/api`; picks same-origin or the loopback daemon port.
-- `src/feedback/store.ts` — `useAgentPages`, `useAgentPage`, `useReviewerName`: one external store per client, live over SSE with backoff.
-- `src/feedback/AgentPage.tsx` — renders an agent page: markdown body, question cards, and the comments, chat and form widgets the agent declared.
+- `src/feedback/store.ts` — `useAgentPages` (pages plus `agents`), `useAgentPage`, `useReviewerName`: one external store per client, live over SSE with backoff.
+- `src/feedback/presence.ts` — `describePresence` (raw facts → listening / working / idle), `formatAge`, `usePresenceClock` (shared 15 s tick).
+- `src/feedback/AgentPresence.tsx` — `PresenceDot` (pulses while listening) and `AgentPresenceChip` ("atlas · listening").
+- `src/feedback/AgentPage.tsx` — renders an agent page: presence chip, markdown body, question cards, and the comments, chat and form widgets the agent declared. Threads carry `id="thread-<id>"` and the page scrolls to a `#thread-<id>` hash once loaded.
 - `src/feedback/index.ts` — barrel for `studio/feedback`.
 - `src/agents/types.ts` — `StudioAgentTarget` (portable Scout selector) and the HUD-011-aligned `StudioCapabilityRequest`/`Result` shapes.
 - `src/agents/registry.ts` — `createAgentRegistry`: selector lookup, default target, strict `resolve`.
@@ -24,7 +26,7 @@ covers: ["src/feedback/**", "src/agents/**", "src/scout/**"]
 - `src/scout/pairing.ts` — reads and writes `.studio/review-pairing.json` (one paired review agent per project).
 - `src/scout/index.ts` — browser barrel for `studio/scout` (client, paths, types only).
 
-Related, not covered: `bin/local-agent-api.mjs` (Studio MCP + `/__studio/api` HTTP), `bin/local-feedback.mjs` (`StudioFeedbackStore`, on-disk log), `bin/local-host.mjs` (mounts the service on the proxy and the MCP port), `apps/studio/app/api/scout/**` and `apps/studio/app/api/studio/scout/pairing/route.ts` (Next routes over `studio/scout/server`), `apps/studio/src/studio/agentPages.tsx`, `apps/studio/src/studio/AnnotatableMarkdown.tsx`, `apps/studio/src/studio/StudioScoutProvider.tsx`.
+Related, not covered: `bin/local-agent-api.mjs` (Studio MCP + `/__studio/api` HTTP), `bin/local-feedback.mjs` (`StudioFeedbackStore`, on-disk log, `pageAttention`), `bin/local-presence.mjs` (`StudioPresence`, `pagePresence`), `bin/local-host.mjs` (mounts the service on the proxy and the MCP port), `apps/studio/app/api/scout/**` and `apps/studio/app/api/studio/scout/pairing/route.ts` (Next routes over `studio/scout/server`), `apps/studio/src/studio/agentPages.tsx` (sidebar presence dots and needs-you badges, `useAgentStatus` for the status bar), `apps/studio/src/studio/AgentInbox.tsx` (the `/studio/agents` inbox), `apps/studio/src/studio/AnnotatableMarkdown.tsx`, `apps/studio/src/studio/StudioScoutProvider.tsx`.
 
 ## Data flow
 
@@ -37,6 +39,8 @@ Two separate channels. Agent pages are pull: an agent publishes and then waits o
 4. Reviewer actions post `comment`, `chat`, `form_response` or `answer` to `/pages/:slug/feedback`, and resolve/reopen to `/feedback/:id/resolve`. The host appends one JSON line to `.studio/feedback/<slug>.jsonl` with a studio-wide `seq`.
 5. The agent's `wait_for_feedback` returns reviewer events after its cursor. It then calls `reply`, `ask`, `update_page` or `resolve_feedback`, which append agent events that the page sees over SSE.
 6. `foldFeedback` (host) turns the log into `FeedbackThread`s: replies nest by `parentId`, `resolve`/`reopen` set `status` on reviewer items, `page_updated` is dropped.
+7. Presence: every MCP tool call touches the session in `StudioPresence`, and `wait_for_feedback` marks it listening until the wait returns. A session's name is `create_page`'s `agent`, else the owner of the first page it touches by slug, else its MCP client name. `GET /pages` adds each page's `presence` (a session listening on it, else its owner session) and a top-level `agents`. Listen start/end and new sessions emit an SSE `presence` event.
+8. Attention: `GET /pages` adds `pageAttention(page, threads)` per page. The reviewer owes unanswered root questions, open reviewer threads whose newest message is the agent's, and the chat when the agent spoke last. Threads where the reviewer spoke last count as `waitingOnAgent`. The store refetches the list (debounced 300 ms) on `feedback`, `pages` and `presence` events.
 
 **Scout dispatch (annotations and the drawer).**
 1. `loadStudioAgentRegistry` builds targets from manifest `agents`, or falls back to `[scout.identity]`.
@@ -66,4 +70,8 @@ Two separate channels. Agent pages are pull: an agent publishes and then waits o
 - `STUDIO_SCOUT_WEB_BASE_URL` overrides `scout.webBaseUrl`. The base URL must be a bare http(s) origin with no path, query, hash or credentials.
 - `pairStudioReviewAgent` ignores the response status, so a rejected pairing fails silently in the browser.
 - `annotationPassToCapabilityRequest` and `receiptToCapabilityResult` are exported and tested (`test/agents.test.ts`) but not called by the app yet. `apps/studio/src/studio/AnnotatableMarkdown.tsx` calls `sendStudioScoutMessage` directly.
+- Presence is in memory on the daemon and holds raw facts only. The page derives the state on its own clock: listening while waiting or within 20 s of a timed-out wait (the agent re-calling), working within 3 min of the last call, idle after. The host emits nothing when an agent goes idle.
+- A wait with no `slugs` covers every page, so a listening agent lights up every page in the studio, including pages it doesn't own. That is accurate: feedback there reaches its wait.
+- `GET /pages` folds every page's log on each call. Fine at local scale; it is the first thing to cache if a studio grows hundreds of pages.
+- Without a host daemon (the static site) `useAgentStatus` returns the shell's "Ready", not an offline warning.
 - `.studio/pages/`, `.studio/feedback/` and `.studio/review-pairing.json` are gitignored in this repo.

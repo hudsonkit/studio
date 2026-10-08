@@ -40,6 +40,53 @@ export interface AgentPageMeta {
   updatedAt: string;
 }
 
+/**
+ * An agent session the host has seen, as raw facts. `describePresence` turns
+ * them into listening / working / idle against the page's own clock.
+ */
+export interface AgentPresence {
+  session: string;
+  name: string;
+  client?: string;
+  /** Blocked in wait_for_feedback right now. */
+  listening: boolean;
+  /** Pages its current or last wait covers; null means every page. */
+  slugs: string[] | null;
+  lastSeenAt: string;
+  lastWaitEndedAt?: string;
+  lastWaitTimedOut: boolean;
+}
+
+export type AttentionKind = "question" | "reply" | "chat";
+
+/** Something on a page that waits on the reviewer. `id` is the thread root. */
+export interface AttentionItem {
+  slug: string;
+  title: string;
+  kind: AttentionKind;
+  id: string;
+  excerpt: string;
+  author?: string;
+  createdAt: string;
+}
+
+export interface PageAttention {
+  needsYou: number;
+  waitingOnAgent: number;
+  items: AttentionItem[];
+}
+
+/** A page as the list endpoint serves it: meta plus who speaks for it and what it waits on. */
+export interface AgentPageSummary extends AgentPageMeta {
+  presence?: AgentPresence | null;
+  attention?: PageAttention;
+}
+
+export interface AgentPagesOverview {
+  pages: AgentPageSummary[];
+  agents: AgentPresence[];
+}
+
 export interface AgentPageWithBody extends AgentPageMeta {
   body: string;
 }

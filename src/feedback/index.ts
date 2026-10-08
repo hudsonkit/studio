@@ -5,6 +5,8 @@
 
 export { AgentPage } from "./AgentPage";
 export type { AgentPageProps } from "./AgentPage";
+export { AgentPresenceChip, PresenceDot } from "./AgentPresence";
+export type { AgentPresenceChipProps } from "./AgentPresence";
 export {
   createFeedbackClient,
   DEFAULT_STUDIO_MCP_ORIGIN,
@@ -12,6 +14,8 @@ export {
   STUDIO_FEEDBACK_API_PREFIX,
 } from "./client";
 export type { FeedbackClient, FeedbackClientOptions, FeedbackStreamHandlers } from "./client";
+export { describePresence, formatAge, usePresenceClock } from "./presence";
+export type { PresenceDescription, PresenceState } from "./presence";
 export { useAgentPage, useAgentPages, useReviewerName } from "./store";
 export type { AgentPageState, AgentPagesState } from "./store";
 export type {
@@ -20,12 +24,18 @@ export type {
   AgentPageDetail,
   AgentPageMeta,
   AgentPageOwner,
+  AgentPagesOverview,
+  AgentPageSummary,
+  AgentPresence,
   AgentPageStatus,
   AgentPageWidget,
   AgentPageWithBody,
+  AttentionItem,
+  AttentionKind,
   FeedbackEvent,
   FeedbackKind,
   FeedbackRole,
   FeedbackThread,
+  PageAttention,
   ReviewerFeedbackInput,
 } from "./types";

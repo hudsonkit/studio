@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { StudioArtifactSync } from "./local-artifacts.mjs";
-import { foldFeedback, FeedbackError, StudioFeedbackStore } from "./local-feedback.mjs";
+import { foldFeedback, FeedbackError, pageAttention, StudioFeedbackStore } from "./local-feedback.mjs";
+import { pagePresence, StudioPresence } from "./local-presence.mjs";
 
 /**
  * The Studio MCP and the page-side feedback API, served by the host daemon.
@@ -352,6 +353,7 @@ function textResult(value, isError = false) {
 export function createStudioAgentService({ listStudios, log = () => {}, onChange = () => {} }) {
   const stores = new Map();
   const sessions = new Map();
+  const presence = new StudioPresence();
 
   function storeFor(studio) {
     const existing = stores.get(studio.id);
@@ -426,6 +428,15 @@ export function createStudioAgentService({ listStudios, log = () => {}, onChange
     }
     const studio = resolveStudio(args.studio);
     const store = storeFor(studio);
+    presence.touch(sessionState.id, studio.id, {
+      name: name === "create_page" ? args.agent : undefined,
+      client: sessionState.client?.name,
+    });
+    // A session that picks up an existing page (after an agent restart, say) speaks as its owner.
+    if (typeof args.slug === "string" && !presence.named(sessionState.id, studio.id)) {
+      const owner = await store.readPage(args.slug).then((page) => page.owner?.name, () => undefined);
+      if (owner) presence.touch(sessionState.id, studio.id, { name: owner });
+    }
 
     if (name === "create_page") {
       const agentName = args.agent || sessionState.client?.name || "agent";
@@ -469,13 +480,20 @@ export function createStudioAgentService({ listStudios, log = () => {}, onChange
       // A session's first wait picks up the open backlog, not the page's whole history.
       const skipResolved = !Number.isFinite(args.since) && sessionCursor === undefined;
       const seconds = Math.min(Math.max(Number(args.timeout_seconds) || DEFAULT_WAIT_SECONDS, 1), MAX_WAIT_SECONDS);
-      const { events, timedOut } = await store.waitForReviewerEvents({
-        slugs: args.slugs,
-        since,
-        timeoutMs: seconds * 1000,
-        signal,
-        skipResolved,
-      });
+      const done = presence.listen(sessionState.id, studio.id, args.slugs);
+      let events;
+      let timedOut;
+      try {
+        ({ events, timedOut } = await store.waitForReviewerEvents({
+          slugs: args.slugs,
+          since,
+          timeoutMs: seconds * 1000,
+          signal,
+          skipResolved,
+        }));
+      } finally {
+        done({ timedOut: timedOut ?? signal?.aborted ?? false });
+      }
       const cursor = events.reduce((max, event) => Math.max(max, event.seq), since);
       sessionState.cursors.set(studio.id, cursor);
       return {
@@ -633,13 +651,18 @@ export function createStudioAgentService({ listStudios, log = () => {}, onChange
     const onPages = (change) => {
       response.write(`event: pages\ndata: ${JSON.stringify(change)}\n\n`);
     };
+    const onPresence = (studioId) => {
+      if (studioId === store.studioId) response.write(`event: presence\ndata: {}\n\n`);
+    };
     const keepalive = setInterval(() => response.write(": keepalive\n\n"), SSE_KEEPALIVE_MS);
     store.emitter.on("event", onEvent);
     store.emitter.on("pages", onPages);
+    presence.emitter.on("change", onPresence);
     response.once("close", () => {
       clearInterval(keepalive);
       store.emitter.off("event", onEvent);
       store.emitter.off("pages", onPages);
+      presence.emitter.off("change", onPresence);
     });
   }
 
@@ -665,8 +688,13 @@ export function createStudioAgentService({ listStudios, log = () => {}, onChange
       return;
     }
     if (request.method === "GET" && rest === "/pages") {
-      const pages = await store.listPages();
-      sendJson(response, 200, { ok: true, studio: studio.id, pages }, cors);
+      const agents = presence.agents(studio.id);
+      const pages = await Promise.all((await store.listPages()).map(async (page) => ({
+        ...page,
+        presence: pagePresence(page, agents),
+        attention: pageAttention(page, foldFeedback(await store.listEvents(page.slug))),
+      })));
+      sendJson(response, 200, { ok: true, studio: studio.id, pages, agents }, cors);
       return;
     }
     const pageMatch = rest.match(/^\/pages\/([a-z0-9-]+)(\/feedback(?:\/([0-9a-f-]+)\/resolve)?)?$/);
@@ -724,7 +752,7 @@ export function createStudioAgentService({ listStudios, log = () => {}, onChange
     }
   }
 
-  return { handle, callTool, resolveStudio, summarizePages, sessions, stores };
+  return { handle, callTool, resolveStudio, summarizePages, sessions, stores, presence };
 }
 
 export function isStudioServicePath(url) {

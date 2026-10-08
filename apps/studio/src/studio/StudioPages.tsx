@@ -32,7 +32,8 @@ import { STU_001_HUDSON_INSERTION_POINTS } from "@/studio/content/proposals";
 import { AnnotatableMarkdown } from "@/studio/AnnotatableMarkdown";
 import { StudioScoutPanel } from "@/studio/StudioScoutPanel";
 import { ArtifactsPage } from "@/studio/ArtifactsPage";
-import { agentSlugFromPath, feedbackClient } from "@/studio/agentPages";
+import { AGENT_INBOX_HREF, agentSlugFromPath, feedbackClient } from "@/studio/agentPages";
+import { AgentInbox } from "@/studio/AgentInbox";
 import { AgentPage } from "studio/feedback";
 import { ScoutShellAtomsStudy } from "@/studio/studies/ScoutShellAtoms";
 import { TalkieFeatureAtlasStudy } from "@/studio/studies/TalkieFeatureAtlas";
@@ -113,6 +114,7 @@ const proposalBodies: Record<string, string> = {
 export function renderStudioPage({ pathname, page }: RenderContext) {
   if (pathname === HOME_HREF) return <HomePage />;
   // Agent pages route before the page list loads, so a direct link never flashes 404.
+  if (pathname === AGENT_INBOX_HREF) return <AgentInbox />;
   const agentSlug = agentSlugFromPath(pathname);
   if (agentSlug) return <AgentPage key={agentSlug} client={feedbackClient} slug={agentSlug} />;
   if (page?.href === "/studio/foundations/claude-artifacts") {
@@ -212,7 +214,7 @@ function HomePage() {
 
       <Link
         href="/studio/foundations/claude-artifacts"
-        className="group mt-8 grid gap-4 border border-studio-rule p-6 transition-colors hover:bg-studio-chip-bg md:grid-cols-[1fr_auto]"
+        className="studio-glass studio-glass-interactive group mt-8 grid gap-4 rounded-md border border-studio-rule p-6 transition-colors hover:bg-studio-chip-bg md:grid-cols-[1fr_auto]"
       >
         <span>
           <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-eyebrow text-studio-ink-faint">

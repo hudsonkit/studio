@@ -87,6 +87,60 @@ function mcpClient(port) {
 }
 
 describe("Studio MCP", () => {
+  test("the page list reports who is listening and what waits on the reviewer", async () => {
+    const { host } = await fixture();
+    const agent = mcpClient(host.mcpPort);
+    await agent.rpc("initialize", { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "claude-code" } });
+    await agent.tool("create_page", { title: "Naming", body: "Pick one.", agent: "atlas", widgets: [{ kind: "comments" }, { kind: "chat" }] });
+    const asReviewer = (path, options) => http(host.proxyPort, path, {
+      ...options,
+      headers: { host: `sample-repo.studio.local:${host.publicPort}` },
+    });
+    const list = async () => JSON.parse((await asReviewer("/__studio/api/pages")).text);
+    const post = (body) => asReviewer("/__studio/api/pages/naming/feedback", { method: "POST", body: { author: { name: "Rae" }, ...body } });
+
+    let listed = await list();
+    expect(listed.agents).toMatchObject([{ name: "atlas", client: "claude-code", listening: false }]);
+    expect(listed.pages[0].presence).toMatchObject({ name: "atlas", listening: false });
+    expect(listed.pages[0].attention).toEqual({ needsYou: 0, waitingOnAgent: 0, items: [] });
+
+    const waiting = agent.tool("wait_for_feedback", { timeout_seconds: 5 });
+    await new Promise((resolveWait) => setTimeout(resolveWait, 50));
+    listed = await list();
+    expect(listed.pages[0].presence).toMatchObject({ name: "atlas", listening: true, slugs: null });
+
+    const comment = JSON.parse((await post({ kind: "comment", body: "Too long" })).text).event;
+    await waiting;
+    listed = await list();
+    expect(listed.pages[0].presence.listening).toBe(false);
+    expect(listed.pages[0].presence.lastWaitTimedOut).toBe(false);
+    expect(listed.pages[0].attention).toMatchObject({ needsYou: 0, waitingOnAgent: 1 });
+
+    await agent.tool("reply", { slug: "naming", feedback_id: comment.id, body: "Shortened it." });
+    await agent.tool("ask", { slug: "naming", question: "Which name?", choices: ["Lumen", "Arc"] });
+    await agent.tool("reply", { slug: "naming", body: "Ready when you are." });
+    listed = await list();
+    const { attention } = listed.pages[0];
+    expect(attention.needsYou).toBe(3);
+    expect(attention.waitingOnAgent).toBe(0);
+    expect(attention.items.map((item) => item.kind).sort()).toEqual(["chat", "question", "reply"]);
+    expect(attention.items.find((item) => item.kind === "reply")).toMatchObject({ id: comment.id, excerpt: "Shortened it.", author: "atlas" });
+
+    const question = attention.items.find((item) => item.kind === "question");
+    await post({ kind: "answer", parentId: question.id, choice: "Arc" });
+    await post({ kind: "chat", body: "Thanks" });
+    listed = await list();
+    expect(listed.pages[0].attention.items.map((item) => item.kind)).toEqual(["reply"]);
+    expect(listed.pages[0].attention.waitingOnAgent).toBe(1);
+
+    // A fresh session (the agent restarted) that picks the page up speaks as its owner.
+    const restarted = mcpClient(host.mcpPort);
+    await restarted.rpc("initialize", { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "claude-code" } });
+    await restarted.tool("reply", { slug: "naming", body: "Back." });
+    listed = await list();
+    expect(listed.agents.map((entry) => entry.name)).toEqual(["atlas", "atlas"]);
+  });
+
   test("an agent publishes a page and hears back from a named reviewer", async () => {
     const { host, repoRoot } = await fixture();
     const agent = mcpClient(host.mcpPort);

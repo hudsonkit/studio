@@ -530,3 +530,61 @@ export class StudioFeedbackStore {
     });
   }
 }
+
+/**
+ * What a page is waiting on, from its folded threads.
+ *
+ * The reviewer owes: an agent question with no answer, an open reviewer thread
+ * whose newest message is the agent's, and the chat when the agent spoke last.
+ * The agent owes: open threads and chat where the reviewer spoke last.
+ */
+export function pageAttention(page, threads) {
+  const items = [];
+  let waitingOnAgent = 0;
+  const newest = (thread) => {
+    let latest = thread;
+    for (const reply of thread.replies) {
+      const candidate = newest(reply);
+      if (candidate.seq > latest.seq) latest = candidate;
+    }
+    return latest;
+  };
+  const item = (kind, thread, message) => ({
+    slug: page.slug,
+    title: page.title,
+    kind,
+    id: thread.id,
+    excerpt: excerpt(message.body ?? (typeof message.data?.choice === "string" ? message.data.choice : "")),
+    author: message.author?.name,
+    createdAt: message.createdAt,
+  });
+
+  let chat;
+  for (const thread of threads) {
+    if (thread.kind === "chat") {
+      if (thread.status === "resolved") continue;
+      const latest = newest(thread);
+      if (!chat || latest.seq > chat.latest.seq) chat = { thread, latest };
+      continue;
+    }
+    if (thread.kind === "question") {
+      if (!thread.replies.some((reply) => reply.kind === "answer")) items.push(item("question", thread, thread));
+      continue;
+    }
+    if (thread.status !== "open") continue;
+    const latest = newest(thread);
+    if (latest.author?.role === "agent") items.push(item("reply", thread, latest));
+    else waitingOnAgent += 1;
+  }
+  if (chat) {
+    if (chat.latest.author?.role === "agent") items.push(item("chat", chat.thread, chat.latest));
+    else waitingOnAgent += 1;
+  }
+  items.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+  return { needsYou: items.length, waitingOnAgent, items };
+}
+
+function excerpt(text) {
+  const flat = String(text ?? "").replace(/\s+/g, " ").trim();
+  return flat.length > 140 ? `${flat.slice(0, 139)}…` : flat;
+}

@@ -13,7 +13,7 @@ import {
   statusPalette,
 } from "@/studio/studioRegistry";
 import { StudioScoutProvider, useStudioScout } from "@/studio/StudioScoutProvider";
-import { AgentPagesNav, useAgentRegistryPages } from "@/studio/agentPages";
+import { AgentPagesNav, useAgentRegistryPages, useAgentStatus } from "@/studio/agentPages";
 
 // Agent pages lead the sidebar: they are the live work waiting on a reviewer.
 const SIDEBAR_BUCKETS = [
@@ -37,6 +37,7 @@ export function StudioApp() {
       registry={registry}
       buckets={SIDEBAR_BUCKETS}
       useExtraPages={useAgentRegistryPages}
+      useStatus={useAgentStatus}
       statusColors={STATUS_COLORS}
       renderStatusPill={(status) => statusPalette.StatusPill({ status })}
       renderPage={renderStudioPage}
