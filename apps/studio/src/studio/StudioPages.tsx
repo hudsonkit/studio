@@ -39,6 +39,7 @@ import { ScoutShellAtomsStudy } from "@/studio/studies/ScoutShellAtoms";
 import { TalkieFeatureAtlasStudy } from "@/studio/studies/TalkieFeatureAtlas";
 import { TalkieBehaviorStudy } from "@/studio/studies/talkieBehavior/TalkieBehaviorStudy";
 import { TalkieOneThoughtStudy } from "@/studio/studies/TalkieOneThought";
+import { StudyPins } from "@/studio/StudyPins";
 import {
   HOME_HREF,
   pages,
@@ -155,7 +156,11 @@ export function renderStudioPage({ pathname, page }: RenderContext) {
     return <TalkieFeatureAtlasStudy page={page} />;
   }
   if (page?.href === "/studio/studies/talkie-one-thought") {
-    return <TalkieOneThoughtStudy page={page} />;
+    return (
+      <StudyPins slug="talkie-one-thought">
+        <TalkieOneThoughtStudy page={page} />
+      </StudyPins>
+    );
   }
   if (page?.href === "/studio/studies/talkie-behavior-programming") {
     return <TalkieBehaviorStudy />;

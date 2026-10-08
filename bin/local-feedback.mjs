@@ -468,6 +468,8 @@ export class StudioFeedbackStore {
         author: normalizeAuthor(input.author ?? page.owner?.name ?? "agent", "agent"),
         parentId: input.parentId || undefined,
         body: requireText(input.body, "body"),
+        // An agent reply mirrored from an artifact thread. Host-set only.
+        source: input.source || undefined,
       };
       if (kind === "question" && input.choices !== undefined) {
         if (!Array.isArray(input.choices) || input.choices.length < 2) {

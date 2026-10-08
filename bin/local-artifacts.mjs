@@ -54,6 +54,14 @@ function studyBody(build, link) {
   ].join("\n");
 }
 
+/** Where an artifact thread sits on the study, or undefined when the read gave no anchor. */
+function artifactAnchor(comment) {
+  const selector = typeof comment.selector === "string" ? comment.selector.trim().slice(0, 1000) : "";
+  const location = typeof comment.location === "string" ? comment.location.trim().slice(0, 300) : "";
+  if (!selector && !location) return undefined;
+  return { kind: "artifact-element", selector: selector || undefined, location: location || undefined };
+}
+
 export class StudioArtifactSync {
   /** @param {{ store: import("./local-feedback.mjs").StudioFeedbackStore, repoRoot: string }} options */
   constructor({ store, repoRoot }) {
@@ -160,7 +168,7 @@ export class StudioArtifactSync {
         `Rebuild first when any study shows build_stale: \`${commandPrefix} build --all\`, then call artifact_sync_plan again.`,
         "publish: Artifact publish with file_path = html_path (icon on first publish), then artifact_link with the url and source_hash.",
         "republish: Artifact publish with file_path = html_path and url, then artifact_link.",
-        "Every study with a url: ArtifactComments read, then artifact_import_comments with every comment you saw (duplicates are skipped).",
+        "Every study with a url: ArtifactComments read, then artifact_import_comments with every comment you saw (duplicates are skipped). Pass each thread's [anchored at] row as selector and its [location] row as location, so the local study pins the thread on the same element. Set from_claude on Claude's comments and pass each comment's timestamp as created_at.",
         "outbound: ArtifactComments reply with thread_id and text, then artifact_mark_mirrored. Replies only land on threads a writer sent to Claude; leave the rest for next time.",
         "unmirrorable: new Studio threads have no artifact thread to land on; mention them to the user.",
       ],
@@ -189,7 +197,10 @@ export class StudioArtifactSync {
   }
 
   /**
-   * @param {{ study: string, comments: Array<{ thread_id: string, comment_id?: string, author?: string, body: string, from_claude?: boolean, resolved?: boolean }> }} input
+   * `selector` and `location` are the thread's "[anchored at]" and "[location]" rows. They are kept
+   * as the root comment's anchor so the local study can pin the thread on the same element.
+   *
+   * @param {{ study: string, comments: Array<{ thread_id: string, comment_id?: string, author?: string, body: string, from_claude?: boolean, resolved?: boolean, selector?: string, location?: string, created_at?: string }> }} input
    */
   async importComments({ study, comments }) {
     if (!Array.isArray(comments)) throw new FeedbackError(400, "comments must be an array.");
@@ -203,6 +214,12 @@ export class StudioArtifactSync {
       link.mirrored ??= {};
       const page = await this.ensureFeedbackPage(build, link);
       const mirroredTexts = new Set(Object.values(link.mirrored).map((entry) => `${entry.threadId}\0${entry.text}`));
+      // Bodies written in Studio, to catch echoes of our own replies when mark_mirrored got no text.
+      const localBodies = new Set(
+        (await this.store.listEvents(page.slug).catch(() => []))
+          .filter((event) => !event.source && event.body)
+          .map((event) => event.body.trim()),
+      );
       const imported = [];
       let skipped = 0;
       for (const comment of comments) {
@@ -213,19 +230,40 @@ export class StudioArtifactSync {
           continue;
         }
         const key = comment.comment_id ? String(comment.comment_id) : `${threadId}:${createHash("sha256").update(body).digest("hex").slice(0, 12)}`;
-        // Our own mirrored replies come back through read; never import them as reviewer feedback.
-        if (link.comments[key] || comment.from_claude || mirroredTexts.has(`${threadId}\0${body}`)) {
+        // Our own mirrored replies come back through read; never import them a second time.
+        if (link.comments[key] || mirroredTexts.has(`${threadId}\0${body}`)) {
           skipped += 1;
           continue;
         }
         const parentId = link.threads[threadId];
-        const event = await this.store.addReviewerEvent(page.slug, {
-          kind: "comment",
-          author: { name: String(comment.author || "Artifact viewer").slice(0, 80) },
-          parentId,
-          body,
-          source: { kind: "artifact", url: link.url, threadId, commentId: comment.comment_id },
-        });
+        const at = Number.isNaN(Date.parse(comment.created_at)) ? undefined : new Date(comment.created_at).toISOString();
+        const source = { kind: "artifact", url: link.url, threadId, commentId: comment.comment_id, at };
+        let event;
+        if (comment.from_claude) {
+          // The artifact's Claude answering in the thread. Imported as an agent reply so Studio shows
+          // the whole conversation; echoes of replies written in Studio ("Name: body") are skipped.
+          const unprefixed = body.replace(/^[^:\n]{1,80}:\s*/, "");
+          if (!parentId || localBodies.has(body) || localBodies.has(unprefixed)) {
+            skipped += 1;
+            continue;
+          }
+          event = await this.store.addAgentEvent(page.slug, {
+            kind: "reply",
+            author: { name: "Claude" },
+            parentId,
+            body,
+            source,
+          });
+        } else {
+          event = await this.store.addReviewerEvent(page.slug, {
+            kind: "comment",
+            author: { name: String(comment.author || "Artifact viewer").slice(0, 80) },
+            parentId,
+            body,
+            anchor: parentId ? undefined : artifactAnchor(comment),
+            source,
+          });
+        }
         if (!parentId) link.threads[threadId] = event.id;
         link.comments[key] = event.id;
         imported.push({ id: event.id, thread_id: threadId, parent_id: parentId });

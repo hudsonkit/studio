@@ -385,7 +385,8 @@ A study is due for `republish` when its sources change after the last publish. I
 
 ## How comments travel
 
-- **Into Studio.** Every artifact comment lands as feedback on the study, threaded the way it was on the artifact. Comments already imported are skipped. So are Claude's own replies, including ones that mirrored a Studio reply.
+- **Into Studio.** Every artifact comment lands as feedback on the study, threaded the way it was on the artifact. Comments already imported are skipped. Claude's replies on the artifact come in too, in the order they were written, so Studio shows the whole conversation. Its copies of replies written in Studio are skipped.
+- **Pinned on the study.** A thread pinned to an element on the artifact shows as a numbered pin on the same element of the local study, while `studio dev` runs. Click the pin to read the thread, reply, or resolve it. Resolved threads lose their pin.
 - **Back to the artifact.** Replies written in Studio under an imported thread are posted to that artifact thread, with the reviewer's name as a prefix. A reply can only land on a thread someone with edit access has sent to Claude. Until then it waits in the plan for the next sync.
 - **Top-level feedback stays in Studio.** Claude can reply to a thread on an artifact but can't open one. The plan lists those notes as unmirrorable so the agent can tell you, rather than dropping them.
 

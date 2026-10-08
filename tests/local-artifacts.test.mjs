@@ -58,7 +58,7 @@ describe("artifact sync", () => {
     expect((await sync.plan()).studies[0].action).toBe("current");
 
     const comments = [
-      { thread_id: "t1", comment_id: "c1", author: "Ada", body: "The hero runs long." },
+      { thread_id: "t1", comment_id: "c1", author: "Ada", body: "The hero runs long.", selector: "#root > main > header", location: "Hero › header" },
       { thread_id: "t1", comment_id: "c2", author: "Ada", body: "@claude can we tighten it?" },
     ];
     const first = await sync.importComments({ study: "sample-study", comments });
@@ -69,6 +69,8 @@ describe("artifact sync", () => {
     const events = await store.listEvents("sample-study");
     const root = events.find((event) => event.kind === "comment" && !event.parentId);
     expect(root.source).toMatchObject({ kind: "artifact", threadId: "t1", commentId: "c1" });
+    expect(root.anchor).toEqual({ kind: "artifact-element", selector: "#root > main > header", location: "Hero › header" });
+    expect(events.find((event) => event.parentId === root.id).anchor).toBeUndefined();
 
     await store.addAgentEvent("sample-study", { kind: "reply", parentId: root.id, body: "Tightened in the next build." });
     plan = await sync.plan();
@@ -83,6 +85,19 @@ describe("artifact sync", () => {
       comments: [...comments, { thread_id: "t1", comment_id: "c3", author: "Claude", body: outbound.text }],
     });
     expect(again.imported).toHaveLength(0);
+
+    // The artifact's own Claude answering comes in as an agent reply; an echo of a Studio reply does not.
+    await store.addReviewerEvent("sample-study", { kind: "comment", author: { name: "Ada" }, parentId: root.id, body: "Ship it." });
+    const claude = await sync.importComments({
+      study: "sample-study",
+      comments: [
+        { thread_id: "t1", comment_id: "c4", author: "Claude", from_claude: true, body: "On it. Trimming the subhead.", created_at: "2026-10-08T21:09" },
+        { thread_id: "t1", comment_id: "c5", author: "Claude", from_claude: true, body: "Ada: Ship it." },
+      ],
+    });
+    expect(claude.imported).toHaveLength(1);
+    const answer = (await store.listEvents("sample-study")).find((event) => event.id === claude.imported[0].id);
+    expect(answer).toMatchObject({ kind: "reply", parentId: root.id, author: { name: "Claude", role: "agent" }, source: { commentId: "c4", at: new Date("2026-10-08T21:09").toISOString() } });
 
     await writeFile(join(repoRoot, "src/Study.tsx"), "export const Study = () => 'changed';\n");
     expect((await sync.plan()).studies[0]).toMatchObject({ action: "republish", build_stale: true });

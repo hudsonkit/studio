@@ -2799,6 +2799,13 @@ button,select,input{font:inherit}
 .dw-prose .dw-inline-code,.dw-prose :not(pre)>code{padding:.08em .38em;font-family:var(--dw-font-mono);font-size:.84em;font-weight:450;color:var(--dw-foreground);background:color-mix(in srgb,var(--dw-foreground) 4.5%,transparent);border:1px solid var(--dw-hair);border-radius:.3rem}
 .dw-prose a .dw-inline-code{color:inherit}
 
+/* The project's logo and header links. */
+.dw-header-logo{display:block;height:1.5rem;width:auto;max-width:8rem;object-fit:contain}
+.dw-site-links{display:flex;align-items:center;gap:1rem;margin-right:.5rem}
+.dw-site-link{font-size:.8125rem;color:var(--dw-muted-foreground);text-decoration:none;white-space:nowrap;transition:color .15s}
+.dw-site-link:hover{color:var(--dw-foreground)}
+@media(max-width:768px){.dw-site-link:not(.dw-site-link-home){display:none}}
+
 /* Without JavaScript these controls would do nothing, so they are not shown. */
 html:not(.js) .dw-fresh-tools,html:not(.js) .dw-header-theme-toggle,html:not(.js) .dw-header-menu-btn{display:none!important}
 

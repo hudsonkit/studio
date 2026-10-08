@@ -36,7 +36,7 @@ Related, not covered:
    - `current` — otherwise.
    Each study with a URL also carries `outbound` and `unmirrorable`. The plan returns fixed `steps` text for the agent.
 2. The agent publishes with its Artifact tool, then calls `artifact_link`. That validates the URL against `^https://claude.ai/(code/)?artifact/<id>$`, sets `url`, `publishedHash`, `publishedAt` and increments `versions`. It also creates the study's agent page (slug = study id, owner `Studio`, client `artifact-sync`, comments widget) if missing, and rewrites the page body when the URL changed.
-3. The agent reads comments with ArtifactComments and passes all of them to `artifact_import_comments`. Each new comment becomes a reviewer `comment` event with `source: { kind: "artifact", url, threadId, commentId }`. The first comment imported for a thread becomes the root. Later ones reply to it.
+3. The agent reads comments with ArtifactComments and passes all of them to `artifact_import_comments`. Each new comment becomes a reviewer `comment` event with `source: { kind: "artifact", url, threadId, commentId, at }`. `at` is the comment's `created_at` from the read, normalized to ISO, and is dropped when it does not parse. The first comment imported for a thread becomes the root. Later ones reply to it. A comment with `from_claude` (the artifact's own Claude answering) becomes an agent `reply` named `Claude` under the thread's root, with the same `source`. A root also gets `anchor: { kind: "artifact-element", selector, location }` from the thread's `[anchored at]` and `[location]` rows, when the agent passes them. `apps/studio/src/studio/StudyPins.tsx` pins open anchored threads on the local study and keeps the root first and orders the replies under it by `source.at`, falling back to `createdAt`, because an artifact reply is often imported after a Studio reply written later.
 4. `outbound` lists Studio replies to post back. The agent posts each with ArtifactComments reply, then calls `artifact_mark_mirrored` with the posted `text`.
 
 links.json shape (`.studio/artifacts/links.json`, gitignored):
@@ -52,7 +52,7 @@ links.json shape (`.studio/artifacts/links.json`, gitignored):
 ## Invariants and traps
 
 - Dedupe key is `comment_id` when the read gives one, else `<threadId>:<sha256(body)[0..12]>`. Without ids, two identical comments in one thread import once.
-- A comment is skipped when its key is already in `comments`, when `from_claude` is true, or when `threadId\0body` matches a `mirrored` entry exactly. If `artifact_mark_mirrored` gets no `text`, the echo of that reply is caught only by `from_claude`.
+- A comment is skipped when its key is already in `comments` or when `threadId\0body` matches a `mirrored` entry exactly. A `from_claude` comment is also skipped when its thread has no root yet, or when its body, with or without a leading `Name: `, equals the body of an event written in Studio (no `source`). That second check catches echoes of our own replies when `artifact_mark_mirrored` got no `text`.
 - `outbound` takes events with a `parentId`, no `source`, a body, and no `mirrored` entry, whose root maps to an artifact thread. Reviewer authors get a `Name: ` prefix, agent authors do not. Text is cut at 4000 chars. Resolved threads are not excluded.
 - `unmirrorable` is every top-level reviewer event without `source`. It is never cleared, so resolved Studio notes stay in the list.
 - Replies only land on artifact threads a writer has sent to Claude. Failed replies stay in `outbound` until marked.

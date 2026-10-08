@@ -54,7 +54,7 @@ Two separate channels. Agent pages are pull: an agent publishes and then waits o
 - The host daemon is the only writer of `.studio/pages` and `.studio/feedback`. `seq` is kept in memory and rebuilt from the max on disk on first use. A second writer would produce duplicate `seq` values.
 - MCP sessions and their per-studio cursors are in memory. After a daemon restart, the first `wait_for_feedback` uses `skipResolved` and returns the open backlog again, not only new events.
 - `wait_for_feedback` waits 400 ms after the first matching event to batch bursts. Default timeout 50 s, max 300 s, and it aborts when the HTTP response closes.
-- `source` on a feedback event marks mirrored artifact comments. `handleApi` strips it from page posts. Only host code (`bin/local-artifacts.mjs`) may set it.
+- `source` on a feedback event marks mirrored artifact comments: reviewer comments, and agent replies from the artifact's own Claude. `source.at` is when the comment was written on the artifact. `handleApi` strips `source` from page posts, and the agent tools build their events field by field, so only host code (`bin/local-artifacts.mjs`) sets it.
 - Page slugs must match `^[a-z0-9][a-z0-9-]{0,63}$`. The API route regex accepts only `[a-z0-9-]+` slugs and `[0-9a-f-]+` feedback ids.
 - `/__studio/api/pages` hides archived pages. MCP `list_pages` hides them unless `include_archived`.
 - The host rejects untrusted Host headers (421) and Origins (403). Only loopback names and `*.studio.local` pass.

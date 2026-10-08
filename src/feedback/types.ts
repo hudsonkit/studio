@@ -117,6 +117,9 @@ export interface FeedbackEvent {
   parentId?: string;
   anchor?: unknown;
   targetId?: string;
+  /** Set by the host on feedback mirrored from elsewhere, such as a Claude artifact thread. */
+  /** `at` is when the comment was written on the artifact, which can be well before it was imported. */
+  source?: { kind: "artifact"; url: string; threadId: string; commentId?: string; at?: string };
 }
 
 /** A feedback item folded with its replies; reviewer items carry open/resolved. */
