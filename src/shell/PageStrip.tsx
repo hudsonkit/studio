@@ -44,7 +44,7 @@ export function PageStrip<
     : null;
 
   return (
-    <div className="border-b border-studio-edge bg-studio-canvas px-7 py-2.5 font-mono text-[10px]">
+    <div className="studio-page-strip border-b border-studio-edge bg-studio-canvas px-7 py-2.5 font-mono text-[10px]">
       <div className="flex flex-wrap items-baseline gap-3">
         <Crumbs page={page} registry={registry} />
         <Sep />

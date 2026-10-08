@@ -38,6 +38,7 @@
     "./router/next": "./src/router/next.tsx",
     "./theme": "./src/theme/index.ts",
     "./theme.css": "./src/theme/aliases.css",
+    "./atmosphere.css": "./src/theme/atmosphere.css",
     "./injection.css": "./src/injection/styles.css",
     "./app-shell": "./src/app-shell/index.ts",
     "./flows": "./src/flows/index.ts",

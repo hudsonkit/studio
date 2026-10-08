@@ -1,0 +1,153 @@
+/*
+ * Studio atmosphere — a lit, translucent dark theme.
+ *
+ * Opt-in: import after studio/theme.css.
+ *   @import "studio/atmosphere.css";
+ *
+ * It lifts Hudson's near-black dark palette to a slate base, lights it with
+ * soft radial pools and a fine grain, and turns the chrome (nav, sidebar,
+ * status bar, page strip) into frosted glass so the light reads through.
+ * Text comes up a step at every tier. Light theme is left alone.
+ *
+ * Hudson's chrome has no hooks of its own, so the glass rules match its
+ * utility classes (bg-background/95, bg-card/95, the frame's fixed inset-0).
+ * Studio's own surfaces use the .studio-content and .studio-page-strip hooks.
+ */
+
+:root[data-hudson-theme="dark"][data-hudson-template] {
+  /* Hudson palette, lifted from 0.145 L neutral to a cool slate. */
+  --background: 0.215 0.014 258;
+  --foreground: 0.975 0.003 250;
+  --card: 0.245 0.015 258;
+  --card-foreground: 0.975 0.003 250;
+  --popover: 0.25 0.015 258;
+  --popover-foreground: 0.975 0.003 250;
+  --secondary: 0.29 0.014 258;
+  --muted: 0.28 0.012 258;
+  --muted-foreground: 0.79 0.012 252;
+  --border: 0.42 0.014 258;
+  --input: 0.42 0.014 258;
+
+  --hud-bg: oklch(var(--background));
+  --hud-bg-2: oklch(var(--card));
+  --hud-surface: oklch(var(--card));
+  --hud-ink: oklch(var(--foreground));
+  --hud-muted: oklch(var(--muted-foreground));
+  --hud-border: oklch(1 0 0 / 0.11);
+
+  --hud-shadow-panel: 0 18px 50px -20px rgba(4, 8, 20, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  --hud-shadow-bar: 0 -12px 40px -24px rgba(4, 8, 20, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --hud-shadow-nav: 0 10px 40px -24px rgba(4, 8, 20, 0.6);
+
+  /* Studio tokens. Canvas stays opaque for drawers and inputs that need it;
+     the page itself is transparent through .studio-content below. */
+  --studio-canvas: oklch(0.235 0.015 258);
+  --studio-canvas-alt: oklch(1 0 0 / 0.045);
+  --studio-surface: oklch(1 0 0 / 0.06);
+
+  --studio-ink-strong: oklch(0.985 0.002 250);
+  --studio-ink: oklch(0.91 0.006 250);
+  --studio-ink-faint: oklch(0.76 0.013 252);
+
+  --studio-edge: oklch(1 0 0 / 0.12);
+  --studio-rule: oklch(1 0 0 / 0.11);
+  --studio-rule-strong: oklch(1 0 0 / 0.2);
+  --studio-chip-bg: oklch(1 0 0 / 0.07);
+  --studio-chip-border: oklch(1 0 0 / 0.14);
+  --code-bg: oklch(0.2 0.014 258 / 0.7);
+  --code-border: oklch(1 0 0 / 0.1);
+
+  /* Glass recipe, reusable by pages through .studio-glass. */
+  --studio-glass-bg: linear-gradient(180deg, oklch(1 0 0 / 0.075), oklch(1 0 0 / 0.035));
+  --studio-glass-border: oklch(1 0 0 / 0.13);
+  --studio-glass-highlight: inset 0 1px 0 oklch(1 0 0 / 0.1);
+  --studio-glass-blur: blur(22px) saturate(1.35);
+
+  --studio-atmosphere:
+    radial-gradient(1000px 640px at 4% -10%, oklch(0.86 0.07 245 / 0.34), transparent 64%),
+    radial-gradient(820px 560px at 104% 0%, oklch(0.84 0.11 175 / 0.2), transparent 62%),
+    radial-gradient(1100px 760px at 58% 122%, oklch(0.82 0.09 55 / 0.18), transparent 64%),
+    radial-gradient(700px 420px at 46% 38%, oklch(0.9 0.02 250 / 0.06), transparent 70%),
+    linear-gradient(180deg, oklch(0.285 0.017 255) 0%, oklch(0.225 0.016 262) 100%);
+  --studio-grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* ── The lit backdrop ─────────────────────────────────────────────── */
+
+:root[data-hudson-theme="dark"] body,
+:root[data-hudson-theme="dark"] .fixed.inset-0.bg-background {
+  background: var(--studio-atmosphere);
+  background-attachment: fixed;
+}
+
+/* Grain sits above everything at very low strength, so glass and text share
+   the same texture. It never takes pointer events. */
+:root[data-hudson-theme="dark"] .fixed.inset-0.bg-background::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  pointer-events: none;
+  background-image: var(--studio-grain);
+  background-size: 180px 180px;
+  opacity: 0.12;
+  mix-blend-mode: soft-light;
+}
+
+/* ── Glass chrome ─────────────────────────────────────────────────── */
+
+:root[data-hudson-theme="dark"] .bg-background\/95,
+:root[data-hudson-theme="dark"] .bg-card\/95,
+:root[data-hudson-theme="dark"] .studio-page-strip {
+  background: var(--studio-glass-bg);
+  -webkit-backdrop-filter: var(--studio-glass-blur);
+  backdrop-filter: var(--studio-glass-blur);
+  border-color: var(--studio-glass-border);
+}
+
+:root[data-hudson-theme="dark"] .bg-background\/95 {
+  box-shadow: var(--hud-shadow-nav), inset 0 -1px 0 oklch(1 0 0 / 0.06);
+}
+
+:root[data-hudson-theme="dark"] .bg-card\/95 {
+  box-shadow: var(--hud-shadow-panel);
+}
+
+:root[data-hudson-theme="dark"] .studio-page-strip {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: linear-gradient(180deg, oklch(1 0 0 / 0.05), oklch(1 0 0 / 0.025));
+  border-bottom-color: oklch(1 0 0 / 0.09);
+}
+
+/* The page reads straight off the lit backdrop. */
+:root[data-hudson-theme="dark"] .studio-content {
+  background: transparent;
+}
+
+/* ── Surfaces pages can use ───────────────────────────────────────── */
+
+:root[data-hudson-theme="dark"] .studio-glass,
+:root[data-hudson-theme="dark"] .eng-sheet {
+  border-radius: 6px;
+  background: var(--studio-glass-bg);
+  -webkit-backdrop-filter: var(--studio-glass-blur);
+  backdrop-filter: var(--studio-glass-blur);
+  border: 1px solid var(--studio-glass-border);
+  box-shadow: var(--studio-glass-highlight), 0 24px 60px -32px rgba(4, 8, 20, 0.6);
+}
+
+:root[data-hudson-theme="dark"] .studio-glass-interactive {
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+:root[data-hudson-theme="dark"] .studio-glass-interactive:hover {
+  background: linear-gradient(180deg, oklch(1 0 0 / 0.11), oklch(1 0 0 / 0.05));
+  border-color: oklch(1 0 0 / 0.2);
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.14), 0 30px 70px -30px oklch(0.75 0.1 200 / 0.25);
+}
+
+:root[data-hudson-theme="dark"] ::selection {
+  background: oklch(0.75 0.12 200 / 0.35);
+}

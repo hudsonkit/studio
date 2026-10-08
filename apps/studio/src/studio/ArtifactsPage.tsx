@@ -127,9 +127,9 @@ export function ArtifactsPage({ page }: { page: StudioAppPage }) {
 
       <section className="max-w-[1100px] py-8">
         <SectionLabel>The loop</SectionLabel>
-        <ol className="mt-4 grid gap-px overflow-hidden border border-studio-rule bg-studio-rule md:grid-cols-2 xl:grid-cols-3">
+        <ol className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {LOOP.map((step, index) => (
-            <li key={step.title} className="flex flex-col gap-3 bg-studio-canvas p-5">
+            <li key={step.title} className="studio-glass studio-glass-interactive flex flex-col gap-3 rounded-md border border-studio-rule bg-studio-canvas p-5">
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-2 text-studio-ink-strong">
                   <span className="font-mono text-[10px] text-studio-ink-faint">{String(index + 1).padStart(2, "0")}</span>

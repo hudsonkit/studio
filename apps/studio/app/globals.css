@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "hudsonkit/styles";
 @import "studio/theme.css";
+@import "studio/atmosphere.css";
 @import "studio/doc.css";
 @import "studio/shell.css";
 @import "studio/injection.css";

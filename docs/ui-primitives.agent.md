@@ -27,6 +27,7 @@ covers: ["src/shell/**", "src/app-shell/**", "src/registry/**", "src/router/**",
 - `src/router/next.tsx` — `nextRouter` / `NextRouterProvider` built on `next/link` and `next/navigation` (`studio/router/next`).
 - `src/theme/index.ts` — re-exports `HudsonThemeScript`, `ThemeProvider`, `useTheme`, `useOptionalTheme`, and types from `hudsonkit/theme`.
 - `src/theme/aliases.css` — maps `--studio-*`, `--scout-*`, `--status-*`, `--code-*` and font vars onto hudsonkit `--hud-*` tokens (`studio/theme.css`).
+- `src/theme/atmosphere.css` — opt-in lit, translucent dark theme (`studio/atmosphere.css`, import after `studio/theme.css`). It lifts Hudson's dark palette to slate, paints radial light pools and a grain overlay on the frame, and turns the Hudson chrome (matched by its `bg-background/95`, `bg-card/95` and `fixed inset-0 bg-background` utilities) into backdrop-blurred glass. Studio hooks: `.studio-content` (transparent page), `.studio-page-strip` (sticky glass), and `.studio-glass` / `.studio-glass-interactive` for page cards. Dark theme only.
 - `src/atoms/index.ts` — barrel for `studio/atoms`.
 - `src/atoms/StatusPill.tsx` — `StatusPill` (filled/outlined/text) and `createStatusPalette`, which binds the pill to a status union.
 - `src/atoms/StatusPill.manifest.ts` — `ComponentManifest` for StatusPill and the reference specimen for `studio/components` manifests.
@@ -36,7 +37,7 @@ covers: ["src/shell/**", "src/app-shell/**", "src/registry/**", "src/router/**",
 
 ## Data flow
 
-- Public subpaths (package.json `exports`): `studio/registry`, `studio/shell`, `studio/shell.css`, `studio/app-shell`, `studio/router`, `studio/router/next`, `studio/theme`, `studio/theme.css`, `studio/atoms`, `studio/injection`, `studio/injection.css`.
+- Public subpaths (package.json `exports`): `studio/registry`, `studio/shell`, `studio/shell.css`, `studio/app-shell`, `studio/router`, `studio/router/next`, `studio/theme`, `studio/theme.css`, `studio/atmosphere.css`, `studio/atoms`, `studio/injection`, `studio/injection.css`.
 - The registry is the single source of truth. `defineStudio` (or `createRegistry`) holds a static `pages` array. Every lookup method also takes `extra` pages, which are appended after the static ones. Runtime pages, such as agent pages, travel this way as `extraPages`.
 - Routing is indirected through `useStudioRouter()`. `RegistryNav`, `SidebarLink`, `PageStrip`, `StudioShell` (search params), `StudioHudsonApp`, and `EngMarkdown` in `src/doc` read `Link`, `usePathname`, and `useSearchParams` from context. With no provider they fall back to `vanillaRouter`.
 - There are two layouts. (1) Standalone: `StudioShell` with `sidebar={<StudioSidebar/>}` and `pageStrip={<PageStrip/>}`. (2) Hudson: `StudioHudsonApp` builds a `HudsonApp` with `mode: "panel"`, wires `useCommands`, `useStatus`, `useNavCenter`, and `useNavActions` hooks (static props are wrapped in hooks when no hook is given), and wraps the result in `routerProvider` and then `ThemeProvider` unless `theme={false}`.
@@ -55,6 +56,7 @@ covers: ["src/shell/**", "src/app-shell/**", "src/registry/**", "src/router/**",
 - `PageItem` sets its variant `expanded` state once, at mount. Navigating to a variant later does not auto-expand it.
 - A non-resizable `StudioSidebar` never publishes `--studio-sidebar-width`. If its `width` is not 220, pass the same number to `StudioShell.sidebarWidth`, or content will overlap.
 - `studio-resize-handle` and `.studio-injection*` styles only apply if the consumer imports `studio/shell.css` / `studio/injection.css`. Shell components use Tailwind utilities (`bg-studio-canvas`, `tracking-eyebrow`, …) that the consumer's Tailwind config and globals must define and scan.
+- `atmosphere.css` targets Hudson's utility class names, not hooks Hudson owns. If Hudson renames `bg-background/95` or `bg-card/95` on its nav, panels or status bar, that chrome goes back to opaque. `StudioHudsonApp`'s default `contentClassName` and `PageStrip` carry the `studio-content` and `studio-page-strip` hooks. A custom `contentClassName` must keep `studio-content` or the page paints opaque canvas over the light.
 - `StatusPill` only knows five tones. Colors come from `--status-<tone>-fg/bg`, which `studio/theme.css` derives from hudsonkit. Without that CSS, pills render with no color.
 - `StudioShell` reads search params inside `<Suspense>` so Next can render it statically. The fallback renders with focus mode off.
 - `src/registry/define.ts` imports runtime code from `../doc` and `../app-shell`. Importing `studio/registry` therefore pulls in react-markdown, rehype-highlight, and `hudsonkit/app-shell`, not just types.

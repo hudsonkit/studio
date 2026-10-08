@@ -94,7 +94,7 @@ export function StudioHudsonApp<
     terminal: false,
     rightPanel: false,
   },
-  contentClassName = "min-h-full bg-studio-canvas text-studio-ink",
+  contentClassName = "studio-content min-h-full bg-studio-canvas text-studio-ink",
 }: StudioHudsonAppProps<Bucket, Surface, Status>) {
   const StudioLeftPanel = () => (
     <RegistryNav
