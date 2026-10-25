@@ -54,6 +54,8 @@ export interface RegistryNavProps<
   statusColors: Record<Status, string>;
   /** Wrapper className override. */
   className?: string;
+  /** Sections rendered above the buckets, inside the same nav rhythm. */
+  leading?: ReactNode;
 }
 
 /**
@@ -75,6 +77,7 @@ export function RegistryNav<
   extraPages = [],
   statusColors,
   className,
+  leading,
 }: RegistryNavProps<Bucket, Surface, Status>) {
   const pathname = useStudioRouter().usePathname();
 
@@ -85,6 +88,7 @@ export function RegistryNav<
         className,
       )}
     >
+      {leading}
       {buckets.map((spec) => (
         <BucketSection
           key={spec.key}

@@ -8,7 +8,7 @@ covers: ["src/local/**", "src/components/**", "src/flows/**", "src/index.ts", "s
 
 ## Files
 
-- `src/index.ts` — root barrel. Re-exports registry, components, router, shell, doc, code, injection, atoms, flows, scout, agents. It does not export `src/local` (node-only, reached via `studio/local`).
+- `src/index.ts` — root barrel. Re-exports registry, components, router, shell, doc, code, injection, atoms, flows, scout, agents, live. It does not export `src/local` or the live watcher (node-only, reached via `studio/local` and `studio/live/server`).
 - `studio.components.ts` — this repo's component registry file. Exports `manifests: ComponentManifest[]` (today only `statusPillManifest` from `src/atoms/StatusPill.manifest.ts`).
 - `src/local/ids.ts` — `normalizeStudioId`, `normalizeStudioHost`, `defaultHostForStudioId` (`<id>.studio.local`), `normalizeRelativeDir`.
 - `src/local/urls.ts` — constants: portal host `studio.local`, supervisor port 43180, port start 5200, `/__studio` control prefix, supervisor API paths.

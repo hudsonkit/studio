@@ -62,10 +62,36 @@ agent-facing working guide.
 | `studio/theme.css` | CSS file that aliases studio's `--studio-*` / `--scout-*` / `--status-*` / `--code-*` vars onto hudsonkit's `--hud-*` token contract. Consumers import this once; values flip with `[data-hudson-theme]`. |
 | `studio/injection.css` | Minimal styles for the Studio-mode injection frame. Consumers can import it as-is or copy the `.studio-injection*` class contract into their own app CSS. |
 | `studio/app-shell` | Hudson AppShell adapters: `StudioHudsonApp` for a complete registry-backed Hudson studio, plus `StudioContentProvider` / `StudioContentOutlet` for framework layouts that already own the shell. |
+| `studio/live` | `StudioLiveView`, `useLiveFeed`, and pure page attribution and stage helpers. |
+| `studio/live/server` | Node-only `POST` handler and `createStudioLiveHandler({ root })` for local study file changes. |
 | `studio/flows` | Spatial journey canvas, live embed registry, inspection UI, and `createStudioFlowsApp(...)` Hudson adapter. |
 | `studio/flows/model` | Flows file, journey, page, and component-tree model. |
 | `studio/flows/render` | Renderer for Flows component trees. |
 | `studio/flows/server` | File store, REST/MCP service, and discussion adapter. |
+
+## Follow study edits
+
+`StudioHudsonApp` includes a Live view at `<homeHref>/live`. It follows edits to
+registered studies and renders the affected page through the host's existing
+`renderPage`. Mount its stream in a local Next host:
+
+```ts
+// app/api/studio/live/route.ts
+export { POST } from "studio/live/server";
+export const dynamic = "force-dynamic";
+```
+
+The default handler watches the server's working directory. Use
+`createStudioLiveHandler({ root: absoluteHostDirectory })` when the process
+starts elsewhere. Page attribution follows route filenames, imports, and
+repository-relative registry `source` files. External source entries are limited
+to repository content such as Markdown and HTML; native app files are not watched.
+
+Select a page to pin it until the next attributed change, or clear the session to
+start fresh. The browser keeps the session start and pin across hot reloads, and
+the server replays up to 500 recent changes. Set `live={false}` to omit the view,
+or pass `live={{ href, label, endpoint }}` to customize it. The route is a local
+development facility and does not add an authentication boundary for deployment.
 
 ## Flows
 

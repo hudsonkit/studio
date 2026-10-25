@@ -35,6 +35,8 @@
     "./injection": "./src/injection/index.tsx",
     "./atoms": "./src/atoms/index.ts",
     "./router": "./src/router/index.ts",
+    "./live": "./src/live/index.ts",
+    "./live/server": "./src/live/server.ts",
     "./router/next": "./src/router/next.tsx",
     "./theme": "./src/theme/index.ts",
     "./theme.css": "./src/theme/aliases.css",

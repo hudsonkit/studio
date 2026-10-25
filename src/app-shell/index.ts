@@ -3,6 +3,7 @@ export { StudioHudsonApp } from "./StudioHudsonApp";
 export type {
   StudioHudsonAppProps,
   StudioHudsonRenderContext,
+  StudioLiveOptions,
 } from "./StudioHudsonApp";
 
 export { createStudioIterationCommands } from "./commands";

@@ -6,7 +6,8 @@ import { AppShell, type AppShellChromeOptions } from "hudsonkit/app-shell";
 import { ThemeProvider, type ThemeProviderProps } from "hudsonkit/theme";
 import type { StudioPage, StudioRegistry } from "../registry";
 import { useStudioRouter } from "../router";
-import { PageStrip, RegistryNav, type BucketSpec } from "../shell";
+import { PageStrip, RegistryNav, SidebarLink, SidebarSectionTitle, type BucketSpec } from "../shell";
+import { StudioLiveView, STUDIO_LIVE_ENDPOINT } from "../live";
 
 type ShellAppConfig = Pick<
   HudsonApp,
@@ -60,6 +61,28 @@ export interface StudioHudsonAppProps<
   managedTheme?: boolean;
   chrome?: AppShellChromeOptions;
   contentClassName?: string;
+  /**
+   * The study live view, on by default at `<homeHref>/live`: it follows
+   * whichever study's files change and renders it with `renderPage`. Needs
+   * the host route `export { POST } from "studio/live/server"` at
+   * `app/api/studio/live/route.ts` (or `endpoint`). `false` leaves it out.
+   */
+  live?: false | StudioLiveOptions;
+}
+
+export interface StudioLiveOptions {
+  href?: string;
+  label?: string;
+  endpoint?: string;
+}
+
+function liveRoute(homeHref: string, live: false | StudioLiveOptions) {
+  if (live === false) return undefined;
+  return {
+    href: live.href ?? `${homeHref.replace(/\/+$/, "")}/live`,
+    label: live.label ?? "Live view",
+    endpoint: live.endpoint ?? STUDIO_LIVE_ENDPOINT,
+  };
 }
 
 export function StudioHudsonApp<
@@ -95,20 +118,55 @@ export function StudioHudsonApp<
     rightPanel: false,
   },
   contentClassName = "studio-content min-h-full bg-studio-canvas text-studio-ink",
+  live = {},
 }: StudioHudsonAppProps<Bucket, Surface, Status>) {
-  const StudioLeftPanel = () => (
-    <RegistryNav
-      registry={registry}
-      buckets={buckets}
-      extraPages={useExtraPages()}
-      statusColors={statusColors}
-    />
-  );
+  const liveView = liveRoute(homeHref, live);
+
+  const StudioLeftPanel = () => {
+    const pathname = useStudioRouter().usePathname();
+    return (
+      <RegistryNav
+        registry={registry}
+        buckets={buckets}
+        extraPages={useExtraPages()}
+        statusColors={statusColors}
+        leading={
+          liveView ? (
+            <section>
+              <SidebarSectionTitle>Live</SidebarSectionTitle>
+              <div className="mt-1.5 flex flex-col">
+                <SidebarLink href={liveView.href} active={pathname === liveView.href}>
+                  <span className="flex-1 truncate">{liveView.label}</span>
+                </SidebarLink>
+              </div>
+            </section>
+          ) : null
+        }
+      />
+    );
+  };
 
   const StudioContent = () => {
     const pathname = resolvePath(useStudioRouter().usePathname(), homeHref);
     const extraPages = useExtraPages();
     const page = registry.pageForPath(pathname, extraPages);
+
+    // A host page registered at the same href wins over the built-in view.
+    if (liveView && !page && pathname === liveView.href) {
+      return (
+        <div className={contentClassName}>
+          <StudioLiveView
+            registry={registry}
+            extraPages={extraPages}
+            excludeHrefs={[homeHref, liveView.href]}
+            endpoint={liveView.endpoint}
+            renderStage={(stagePage) =>
+              renderPage({ pathname: stagePage.href, page: stagePage, registry, extraPages })
+            }
+          />
+        </div>
+      );
+    }
 
     return (
       <div className={contentClassName}>
